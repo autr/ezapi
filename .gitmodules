@@ -1,0 +1,3 @@
+[submodule "modules/wireless-tools"]
+	path = modules/wireless-tools
+	url = https://github.com/autr/wireless-tools
