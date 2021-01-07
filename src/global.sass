@@ -1,0 +1,108 @@
+
+@import '../../sassis/src/_index'
+
+
+
+@keyframes rotate
+	100% 
+		transform: rotate(360deg) 
+
+@keyframes dash 
+	0% 
+		stroke-dasharray: 1, 150
+		stroke-dashoffset: 0
+ 
+	50% 
+		stroke-dasharray: 90, 150 
+		stroke-dashoffset: -35
+ 
+	100% 
+		stroke-dasharray: 90, 150
+		stroke-dashoffset: -124
+ 
+
+.spinner 
+	animation: rotate 2s linear infinite 
+	transform-origin: 50% 50%
+	circle
+		stroke-linecap: round
+		animation: dash 1.5s ease-in-out infinite
+
+
+html
+	+reset
+	+terminal-structure
+	// +terminal-code( $inv )
+	+shorthand
+	+fontsize(13px)
+	font-family: sans-serif
+
+	body
+
+		.cold
+
+			$hue: 200
+			$bg: hsl($hue, 100%, 45%)
+			$txt: hsl($hue, 100%, 90%)
+			+raw-theme( $bg, $txt )
+			// *
+			// 	text-shadow: -1px -1px 1px hsl($hue, 100%, 35%)
+			// .filled, .filled *
+			// 	text-shadow: 1px 1px 1px hsl($hue, 100%, 94%)
+
+		.hot 
+
+			$hue: 50
+			$bg: hsl($hue, 100%, 65%)
+			$txt: hsl($hue - 25, 100%, 50%)
+			+raw-theme( $bg, $txt )
+			// *
+			// 	text-shadow: 1px 1px 1px hsl($hue + 6, 100%, 65%)
+			// .filled, .filled *
+			// 	text-shadow: -1px -1px 1px hsl($hue - 25, 100%, 45%)
+		.dark
+
+			$hue: 210  // 52	61	70	
+			$bg: hsl($hue, 14%, 20%)
+			$txt: hsl($hue + 20, 30%, 85%)
+			+raw-theme( $bg, $txt )
+		.light
+			$hue: 210  // 52	61	70	
+			$bg: hsl($hue, 14%, 95%)
+			$txt: hsl($hue + 20, 10%, 30%)
+			+raw-theme( $bg, $txt )
+
+		.lux
+			$hue: 210  // 52	61	70	
+			$bg: hsl($hue, 20%, 86%)
+			$txt: hsl($hue + 50, 30%, 30%)
+			+raw-theme( $bg, $txt )
+
+		.new
+			$hue: 340  // 52	61	70	
+			$bg: hsl($hue, 90%, 60%)
+			$txt: hsl($hue - 50, 100%, 85%)
+			+raw-theme( $bg, $txt )
+
+
+		$sidebar: 200px
+		$header: 40px
+		$subheader: 40px
+		input, textarea
+			font-family: monospace
+
+		.sidebar
+			+fixed
+			+width-height($sidebar, 100vh)
+			border-right: 1px solid mono(15%)
+		.router
+			+fixed
+			+top-left(0px, $sidebar)
+			+width-height( calc(100% - #{$sidebar}), 100vh)
+			overflow: auto
+			padding: 1em
+		.panel-tree, .panel-diff, .panel-history
+			overflow: auto
+			max-height: calc( 100vh - #{$header + $subheader} )
+
+
