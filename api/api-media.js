@@ -1,4 +1,4 @@
-const types = require('./types.js')
+const types = require('../types.js')
 const fs = require('fs')
 const path = require('path')
 const xpm2png = require('../modules/xpm2png')
@@ -7,54 +7,48 @@ const { execSync } = require('child_process')
 
 module.exports = [
 
-
 	// ---------------- CAT_MEDIA ----------------
 
 	{
 		url: '/xpm2png',
 		type: 'get',
-		description: 'retrive a png from xpm',
+		description: 'retrieve a png from xpm',
 		category: types.CAT_MEDIA,	
-		schema: {},
-		returns: 'json',
-		method: async function( req, res ) {
-			try {
-				const input = req.query.path
-				const name = path.basename( input )
-				const output = path.join( __dirname, './icons/' + name + '.png' )
-				// if ( fs.existsSync( output ) ) return res.sendFile( output )
-				const img = await xpm2png( input, true )
-				const file = await img.writeAsync( output )
-				res.sendFile( output )
-			} catch(err) {
-				throw err
-				res.status(500).send( { message: err.message } )
+		schema: {
+			path: {
+				type: 'string',
+				description: 'path to xpm file',
+				required: true
 			}
-		}
+		},
+		data: async params => {
+			const input = params.path
+			const name = path.basename( input )
+			const output = path.join( __dirname, '../bin/icons/' + name + '.png' )
+			if (await fs.fileExistsSync(output)) return output
+			const img = await xpm2png( input, true )
+			const file = await img.writeAsync( output )
+			return output
+		},
+		next: async (data, req, res) => res.sendFile( data )
 	},
 	{
-		url: '/icon',
+		url: '/icons',
 		type: 'get',
 		description: 'application icon',
 		category: types.CAT_MEDIA,	
-		schema: {},
-		returns: 'json',
-		method: async function( req, res ) {
-			try {
-				const search = req.query.name
-				const cmd = `find /usr/share/icons /usr/share/pixmaps -iname '*${search}*.xpm' -o -iname '*${search}*.png' -o -iname '*${search}*.svg'`
-				const e = await execSync( cmd )
-				const data = e.toString().split('\n').filter( e => e != '' )
-				res.send( data )
-			} catch(err) {
-				res.status(500).send( { message: err.message } )
+		schema: {
+			iname: {
+				type: 'string',
+				description: 'iname of app',
+				required: true
 			}
+		},
+		data: async params => {
+			const s = params.iname
+			const cmd = `find /usr/share/icons /usr/share/pixmaps -iname '*${s}*.xpm' -o -iname '*${s}*.png' -o -iname '*${s}*.svg'`
+			const data = await execSync( cmd )
+			return data.toString().split('\n').filter( e => e != '' )
 		}
 	}
 ]
-
-
-
-// /usr/share/icons/
-
-// /usr/share/pixmaps

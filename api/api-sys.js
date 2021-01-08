@@ -1,4 +1,4 @@
-const types = require('./types.js')
+const types = require('../types.js')
 const os = require('os')
 const displays = require("displays")
 const systeminformation = require('systeminformation')
@@ -17,14 +17,11 @@ module.exports = [
 		category: types.CAT_SYS,
 		schema: {},
 		returns: 'json',
-		method: async function( req, res ) {
+		data: async params => {
 			let data = {}
 			const meth = [ 'arch', 'cpus', 'endianness', 'freemem', 'getPriority', 'homedir', 'hostname', 'loadavg', 'networkInterfaces', 'platform', 'release', 'tmpdir', 'totalmem', 'type', 'userInfo', 'uptime', 'version' ]
-			meth.forEach( m => {
-				data[ m ] = os[m]() 
-			})
-			res.send( data )
-
+			meth.forEach( m => data[ m ] = os[m]() )
+			return data
 		}
 	},
 
@@ -35,7 +32,7 @@ module.exports = [
 		category: types.CAT_SYS,
 		schema: {},
 		returns: 'json',
-		method: async function( req, res ) {
+		data: async params => {
 			try {
 				const data = await xrandr.parser( await execSync('DISPLAY=:0 xrandr') )
 				res.send( data )
@@ -53,23 +50,20 @@ module.exports = [
 		category: types.CAT_SYS,
 		schema: {},
 		returns: 'json',
-		method: async function( req, res ) {
+		data: async params => {
 
 			if (os.type() == 'Darwin') {
-				const data = await new Promise( (resolve, reject) => {
-					return get_mac_apps.getApps()
-				})
-				res.send( data )
+				return get_mac_apps.getApps()
 			} else {
 				const lal = await linux_app_list()
 				const list = lal.list()
-				let arr = []
+				let data = []
 				for (let i = 0; i < list.length; i++ ) {
 					let o = await lal.data( list[i] )
 					delete o.lang
-					arr.push( o )
+					data.push( o )
 				}
-				arr ? res.send( arr ) : res.status( 500 ).send( { message: 'no apps found' } )
+				return data
 			}
 
 

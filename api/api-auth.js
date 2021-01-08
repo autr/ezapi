@@ -1,4 +1,4 @@
-const types = require('./types.js')
+const types = require('../types.js')
 const flash = require('connect-flash')
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
@@ -49,19 +49,19 @@ module.exports = [
 
 	{
 		type: 'use',
-		method: passport.initialize(),
+		data: passport.initialize(),
 		description: 'auth initialize',
 		category: types.CAT_AUTH
 	},
 	{
 		type: 'use',
-		method: passport.session(),
+		data: passport.session(),
 		description: 'auth session',
 		category: types.CAT_AUTH
 	},
 	{
 		type: 'use',
-		method: () => flash(),
+		data: flash(),
 		description: 'storing log errors with flash()',
 		category: types.CAT_AUTH
 	},
@@ -74,8 +74,8 @@ module.exports = [
 		description: 'log out of api',
 		category: types.CAT_AUTH,
 		schema: {},
-		returns: 'html',
-		method: function(req, res) {
+		data: async params => null,
+		next: async (data, req, res) => {
 			req.logout()
 			res.redirect('/')
 		}
@@ -86,17 +86,14 @@ module.exports = [
 		description: 'log into api',
 		category: types.CAT_AUTH,
 		schema: {},
-		returns: 'html',
-		method: function(req, res) {
-			res.send(`
+		data: async params => null,
+		next: async (data, req, res) => res.send(`
 				<form action="/login" method="POST">
 					<p><input name="username"></p>
 					<p><input name="password"></p>
 					<p><input type="submit" value="Login"></p>
 					<p style="color: hsl(0, 90%, 70%)">${req.flash('error')}</p>
-				</form>
-			` + style)
-		}
+				</form> ` + style )
 	},
 	{
 		url: '/login',
@@ -104,8 +101,8 @@ module.exports = [
 		description: 'post username and password to log in',
 		category: types.CAT_AUTH,
 		schema: {},
-		returns: 'html',
-		method: passport.authenticate('login', {
+		data: async params => null,
+		next: async (data, req, res) => passport.authenticate('login', {
 			successRedirect: '/',
 			failureRedirect: '/login',
 			failureFlash: true

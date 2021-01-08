@@ -4,7 +4,7 @@ const http = require('http')
 const wss = new WebSocket.Server({ port: 9876 })
 
 const inform = ( pid, type, message ) => {
-	console.log(`[api.js] 🌐 📣  broadcasting WS message: [${pid}] "${type}" "${message}"`)
+	console.log(`[api.js] ${type} 🌐 ${pid}: "${message}"`)
 	wss.clients.forEach(function each(client) {
 	  if (client.readyState === WebSocket.OPEN) {
 	    client.send( JSON.stringify( { pid, type, message } ) )
