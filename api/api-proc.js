@@ -2,62 +2,29 @@ const types = require('./types.js')
 const util = require('./util.js')
 const os = require('os')
 const { snapshot } = (os.type() == 'Darwin') ? {} : require("process-list")
-const linux_app_list = require('linux-app-list')
 const open = require('open')
-const { spawn } = require('child_process')
+const { spawn, execSync } = require('child_process')
+const { wss, inform } = require('../websockets.js')
+const { API_ERR, API_TRY, API_SUCCESS, API_OPEN, API_STDOUT, API_STDERR, API_CLOSE } = require('./types.js')
+
+let spawned = {}
 
 module.exports = [
+
 
 
 	// ---------------- CAT_PROC ----------------
 
 	{
-		url: '/apps_list',
+		url: '/snapshot',
 		type: 'get',	
-		description: 'list installed apps',
+		description: 'active processes and pids',
 		category: types.CAT_PROC,
 		schema: {},
 		returns: 'json',
 		method: async function( req, res ) {
-
-			if (os.type() == 'Darwin') {
-				const data = await new Promise( (resolve, reject) => {
-					return get_mac_apps.getApps()
-				})
-				res.send( data )
-			} else {
-				const data = await linux_app_list()
-				data ? res.send( data ) : res.status( 500 ).send( { message: 'no apps found' } )
-			}
-
-
-		}
-	},
-
-	{
-		url: '/activity',
-		type: 'get',	
-		description: 'show processes',
-		category: types.CAT_PROC,
-		schema: {},
-		returns: 'json',
-		method: async function( req, res ) {
-			// pid: Number - process pid
-			// ppid: Number - parent process pid
-			// name: String - process name (title)
-			// path: String - full path to the process binary file
-			// threads: Number - threads per process
-			// owner: String - the owner of the process
-			// priority: Number - an os-specific process priority
-			// cmdline: String - full command line of the process
-			// starttime: Date - the process start date / time
-			// vmem: String - virtual memory size in bytes used by process
-			// pmem: String - physical memory size in bytes used by process
-			// cpu: Number - cpu usage by process in percent
-			// utime: String - amount of time in ms that this process has been scheduled in user mode
-			// stime: String - amount of time that in ms this process has been scheduled in kernel mode
 			if (os.type() == 'Darwin') return res.send( [] )
-			const data = await snapshot('pid', 'name', 'threads' )
+			const data = await snapshot('pid', 'ppid', 'name', 'path', 'threads', 'owner', 'priority', 'cmdline', 'starttime', 'vmem', 'pmem', 'cpu', 'utime', 'stime' )
 			res.send( data )
 
 		}
@@ -66,7 +33,7 @@ module.exports = [
 	{
 		url: '/open',
 		type: 'get',
-		description: 'open anything',
+		description: 'open anything with default apps',
 		category: types.CAT_PROC,
 		schema: {},
 		returns: 'json',
@@ -104,12 +71,23 @@ module.exports = [
 		type: 'get',
 		description: 'spawn a process',
 		category: types.CAT_PROC,
-		schema: {},
+		schema: [
+			{
+				name: 'bin',
+				desc: 'application',
+				type: 'string'
+			},
+			{
+				name: 'args',
+				desc: 'arguments',
+				type: 'string'
+			}
+		],
 		returns: 'json',
 		method: async function( req, res ) {
 			// if (!req.user) return util.NO_AUTH( req, res )
 			try {
-				const cmd = req.query.url || ''
+				const cmd = req.query.bin || ''
 				const args = (req.query.args || '').split(',')
 
 				const born = await spawn( cmd, args, {})
@@ -122,14 +100,50 @@ module.exports = [
 				born.on( 'close', ( code ) => inform( pid, API_STDERR, `closed with code "${code}"`) && delete spawned[pid] )
 				born.on( 'exit', ( code ) => inform( pid, API_STDERR, `exited with code "${code}"`) && delete spawned[pid] )
 
-
 				res.send( { pid, spawnfile, spawnargs } )
 			} catch( err ) {
-				console.log(err.message)
 				res.status(500).send( { message: err.message } )
 			}
 
 		}
+	},
+	{
+		url: '/pkill',
+		type: 'get',
+		description: 'kill by app name',
+		category: types.CAT_PROC,
+		schema: [],
+		returns: 'json',
+		method: async function( req, res ) {
+			try {
+				if (!req.query.name) res.status(500).send( {message: 'no name supplied'} )
+				const e = await execSync(`pkill -9 ${req.query.name}`)
+				const data = e.toString()
+				res.send( { data } )
+			} catch(err) {
+				res.status(500).send( { message: err.message } )
+			}
+		}
+	},
+	{
+		url: '/kill',
+		type: 'get',
+		description: 'kill by app name',
+		category: types.CAT_PROC,
+		schema: [],
+		returns: 'json',
+		method: async function( req, res ) {
+			try {
+				if (!req.query.pid) res.status(500).send( {message: 'no pid supplied'} )
+				const e = await execSync(`kill -9 ${req.query.pid}`)
+				const data = e.toString()
+				res.send( { data } )
+			} catch(err) {
+				res.status(500).send( { message: err.message } )
+			}
+		}
 	}
 
+
+//1716
 ]

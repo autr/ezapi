@@ -1,3 +1,6 @@
 [submodule "modules/wireless-tools"]
 	path = modules/wireless-tools
 	url = https://github.com/autr/wireless-tools
+[submodule "modules/xpm2png"]
+	path = modules/xpm2png
+	url = https://github.com/autr/xpm2png

@@ -4,6 +4,7 @@ const displays = require("displays")
 const systeminformation = require('systeminformation')
 const execSync = require('child_process').execSync
 const xrandr = require('xrandr')
+const linux_app_list = require('linux-app-list')
 
 module.exports = [
 
@@ -43,5 +44,35 @@ module.exports = [
 			}
 		}
 
-	}
+	},
+
+	{
+		url: '/apps',
+		type: 'get',	
+		description: 'list installed apps',
+		category: types.CAT_SYS,
+		schema: {},
+		returns: 'json',
+		method: async function( req, res ) {
+
+			if (os.type() == 'Darwin') {
+				const data = await new Promise( (resolve, reject) => {
+					return get_mac_apps.getApps()
+				})
+				res.send( data )
+			} else {
+				const lal = await linux_app_list()
+				const list = lal.list()
+				let arr = []
+				for (let i = 0; i < list.length; i++ ) {
+					let o = await lal.data( list[i] )
+					delete o.lang
+					arr.push( o )
+				}
+				arr ? res.send( arr ) : res.status( 500 ).send( { message: 'no apps found' } )
+			}
+
+
+		}
+	},
 ]

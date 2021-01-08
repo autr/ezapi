@@ -1,6 +1,9 @@
 const types = require('./types.js')
 const fs = require('fs')
-const xpm2js = require('xpm2png')
+const path = require('path')
+const xpm2png = require('../modules/xpm2png')
+const api = require('../api.js').keys
+const { execSync } = require('child_process')
 
 module.exports = [
 
@@ -16,31 +19,42 @@ module.exports = [
 		returns: 'json',
 		method: async function( req, res ) {
 			try {
-				const input = './sample_1920×1280.xpm'
+				const input = req.query.path
 				const name = path.basename( input )
 				const output = path.join( __dirname, './icons/' + name + '.png' )
-				if ( fs.existsSync( output ) ) return res.sendFile( output )
-				const img = await xpm2png( input, false )
+				// if ( fs.existsSync( output ) ) return res.sendFile( output )
+				const img = await xpm2png( input, true )
 				const file = await img.writeAsync( output )
 				res.sendFile( output )
 			} catch(err) {
+				throw err
 				res.status(500).send( { message: err.message } )
 			}
 		}
 	},
 	{
-		url: '/raspivid',
+		url: '/icon',
 		type: 'get',
-		description: 'open camera',
-		category: types.CAT_MEDIA,
-		schema: require('./camera.schema.js'),
+		description: 'application icon',
+		category: types.CAT_MEDIA,	
+		schema: {},
 		returns: 'json',
-		method: async function(req, res) {
+		method: async function( req, res ) {
 			try {
-
+				const search = req.query.name
+				const cmd = `find /usr/share/icons /usr/share/pixmaps -iname '*${search}*.xpm' -o -iname '*${search}*.png' -o -iname '*${search}*.svg'`
+				const e = await execSync( cmd )
+				const data = e.toString().split('\n').filter( e => e != '' )
+				res.send( data )
 			} catch(err) {
 				res.status(500).send( { message: err.message } )
 			}
 		}
 	}
 ]
+
+
+
+// /usr/share/icons/
+
+// /usr/share/pixmaps

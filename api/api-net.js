@@ -1,89 +1,105 @@
 const types = require('./types.js')
 const util = require('./util.js')
-const wifi_control = require("wifi-control")
-
-wifi_control.init( { debug: true, iface: 'wlan0' } )
-
-// let interfaces = {}
-
-const getInterface = async name => {
-	// if (!interfaces[name]) await wifi_control.init
-}
+const { ifconfig, iwconfig, iwlist, wpa, wpa_supplicant } = require("../modules/wireless-tools")
+const pi_wifi = require("../modules/pi-wifi.js")
 
 module.exports = [
 
 	// ---------------- CAT_NET ----------------
 
 	{
-		url: '/dhcpcd',
+		url: '/ifconfig',
 		type: 'get',	
-		description: 'show /etc/dhcpcd.conf contents',
+		description: 'list of interfaces',
 		category: types.CAT_NET,
 		schema: {},
 		returns: 'json',
 		method: async function( req, res ) {
-			const cat = module.exports.find( e => e.type == 'get' && e.url == '/cat')
-			await cat.method( { query: { url: '/etc/dhcpcd.conf' } }  , res)
+			ifconfig.status( (err, data) => {
+				(err) ? res.status(500).send( { message: err } ) : res.send( data )
+			}) 
+			
 		}
 	},
 	{
-		url: '/show_wifi',
+		url: '/iwconfig',
 		type: 'get',	
-		description: 'show current wifi connection',
+		description: 'list of active connections',
 		category: types.CAT_NET,
 		schema: {},
 		returns: 'json',
 		method: async function( req, res ) {
-			let data = await wifi_control.getIfaceState() 
-			res.send( data )
+			iwconfig.status( (err, data) => {
+				(err) ? res.status(500).send( { message: err } ) : res.send( data )
+			}) 
+			
 		}
 	},
 	{
-		url: '/scan_wifi',
+		url: '/iwlist',
 		type: 'get',	
-		description: 'scan for available wifi networks',
+		description: 'scan for networks',
 		category: types.CAT_NET,
 		schema: {},
 		returns: 'json',
 		method: async function( req, res ) {
-			wifi_control.scanForWiFi( (err, data ) => {
-				if (err) return res.status( 400 ).send( err )
-				res.send( data )
-			});
+			iwlist.scan( { 
+					iface: req.query.iface || 'wlan0',
+					show_hidden: true
+				}, (err, data) => {
+				(err) ? res.status(500).send( { message: err } ) : res.send( data )
+			}) 
+			
 		}
 	},
 	{
-		url: '/reset_wifi',
+		url: '/wpa_status',
 		type: 'get',	
-		description: 'show dhcpcd.conf contents',
+		description: 'status of wpa_supplicant',
 		category: types.CAT_NET,
 		schema: {},
 		returns: 'json',
 		method: async function( req, res ) {
-			if (!req.user) return util.NO_AUTH( req, res )
-			wifi_control.resetWiFi( (err, data ) => {
-				if (err) return res.status( 400 ).send( err )
-				res.send( data )
-			});
+			wpa.status( req.query.iface || 'wlan0', (err, data) => {
+				(err) ? res.status(500).send( { message: err } ) : res.send( data )
+			}) 
+			
 		}
 	},
 	{
-		url: '/connect_wifi',
+		url: '/wpa_supplicant_enable',
 		type: 'get',	
-		description: 'show dhcpcd.conf contents',
+		description: 'connect to wifi network',
 		category: types.CAT_NET,
 		schema: {},
 		returns: 'json',
 		method: async function( req, res ) {
-			if (!req.user) return util.NO_AUTH( req, res )
-			wifi_control.connectToAP( {
-				ssid: req.query.ssid,
-				password: req.query.password
-			}, (message, data ) => {
-				if (message) return res.status( 400 ).send( { message } )
-				res.send( data )
-			});
+			const opts = {
+			  interface: req.query.iface || 'wlan0',
+			  ssid: req.query.ssid,
+			  passphrase: req.query.pass,
+			  driver: 'wext'
+			}
+			if (!req.query.ssid) return res.status(500).send({ message: 'no ssid supplied'})
+			wpa_supplicant.enable( opts, req.query.pass || '', (err, data) => {
+				(err) ? res.status(500).send( { message: err } ) : res.send( data )
+			}) 
+		}
+	},
+	{
+		url: '/connect',
+		type: 'get',	
+		description: 'connect to wifi network',
+		category: types.CAT_NET,
+		schema: {},
+		returns: 'json',
+		method: async function( req, res ) {
+			if (!req.query.ssid) return res.status(500).send({ message: 'no ssid supplied'})
+			pi_wifi.connect( req.query.ssid, req.query.pass || '', (err, data) => {
+				(err) ? res.status(500).send( { message: err } ) : res.send( data )
+			}) 
 		}
 	}
 
 ]
+

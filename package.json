@@ -20,6 +20,7 @@
     "jimp": "^0.16.1",
     "linux-app-list": "^1.0.1",
     "mime": "^2.4.7",
+    "node-find": "^0.6.1",
     "nodemon": "^2.0.6",
     "open": "^7.3.0",
     "passport": "^0.4.1",
@@ -50,6 +51,9 @@
     "rollup-plugin-svelte": "^7.0.0",
     "rollup-plugin-terser": "^7.0.0",
     "svelte": "^3.0.0"
+  },
+  "resolutions": {
+    "graceful-fs": "^4.2.4"
   },
   "scripts": {
     "start": "nodemon app.js",

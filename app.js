@@ -4,8 +4,7 @@ const api = require( './api.js')
 const fs = require('fs')
 const path = require('path')
 
-api.forEach( item => {
-	// console.log(`[app.js] 🦾  adding endpoint: ${item.type} ${item.url || '~'}`)
+api.list.forEach( item => {
 	if (item.type == 'use') {
 		app[ item.type ]( item.method )
 	} else {

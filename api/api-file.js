@@ -5,9 +5,10 @@ const fs = require('fs')
 const path = require('path')
 const mime = require('mime')
 const shell = require('shelljs')
+const find = require('node-find')
+const { spawn, execSync } = require('child_process')
 
 const UNIQUE_FILE_ID = ( obj ) => {
-	if (!obj.ino || !obj.birthtimeMs || !obj.ctimeMs) throw { message: "no properly formatted obj for UNIQUE_FILE_ID" }
 	return `${obj.ino}-${obj.birthtimeMs}-${obj.ctimeMs}`
 }
 
@@ -23,20 +24,25 @@ module.exports = [
 		schema: {},
 		returns: 'json',
 		method: async function( req, res ) {
-			const url = require('expand-tilde')( req.query.url || os.homedir() )
-			let data = await shell.ls( '-l', url )
-			for (let i = 0; i < data.length; i++ ) {
-				try {
-					const f = data[i]
-					f.url = path.resolve( url, f.name )
-					f.name = path.basename( f.url )
-					f.ext = path.extname( f.url )
-					f.mime = mime.getType( f.ext )
-					f.file = (await fs.statSync( f.url )).isFile()
-					f.id = UNIQUE_FILE_ID(f)
-				} catch(err) {
-					console.log('', err.message)
+			const args = (req.query.args || '').split(',')
+			let url = args.find( a => a[0] != '-' ) || '.'
+			console.log(url, args)
+			let data = await shell.ls( ...args )
+			try {
+				for (let i = 0; i < data.length; i++ ) {
+					let o = data[i]
+					if ( typeof(o) == 'object' ) {
+						o.url = path.resolve( url, o.name )
+						o.name = path.basename( o.url )
+						o.ext = path.extname( o.url )
+						o.mime = mime.getType( o.ext )
+						o = {...o, ...(await fs.statSync( o.url ))}
+						o.unique_id = UNIQUE_FILE_ID(o)
+						data[i] = o
+					} 
 				}
+			} catch(err) {
+				return res.status(500).send({message: err.message})
 			}
 			res.send( data )
 		}
@@ -44,31 +50,22 @@ module.exports = [
 	{
 		url: '/find',
 		type: 'get',
-		description: 'list files and folders',
+		description: 'find files with -iname',
 		category: types.CAT_FILE,
 		schema: {},
 		returns: 'json',
 		method: async function( req, res ) {
-			const url = require('expand-tilde')( req.query.url || os.homedir() )
-			const query = req.query.query
-			let data = (await shell.find( url )).filter(function (file) {
-			  return file.match(/\.mp4?$/i);
-			})
-			for (let i = 0; i < data.length; i++ ) {
-				try {
-					let f = await fs.statSync( data[i] )
-					f.url = data[i]
-					f.name = path.basename( f.url )
-					f.ext = path.extname( f.url )
-					f.mime = mime.getType( f.ext )
-					f.file = f.isFile()
-					f.id = UNIQUE_FILE_ID(f)
-					data[i] = f
-				} catch(err) {
-					console.log('', err.message)
-				}
+			try {
+				const paths = (req.query.paths || '').replaceAll(',',' ').trim()
+				const search = req.query.search
+				const cmd = `find ${ paths }  -iname '${search}'`
+				const e = await execSync( cmd )
+				const data = e.toString().split('\n').filter( e => e != '' )
+				res.set('Content-Type', 'text/plain')
+				res.send( data )
+			} catch(err) {
+				res.status(500).send( { message: err.message } )
 			}
-			res.send( data )
 		}
 	},
 	{
@@ -79,23 +76,11 @@ module.exports = [
 		schema: {},
 		returns: 'json',
 		method: async function( req, res ) {
-			if (!req.user) return util.NO_AUTH( req, res )
-			const data = await shell.ls( req.query.url )
-			const ls = module.exports.find( e => e.type == 'get' && e.url == '/ls')
+			// if (!req.user) return util.NO_AUTH( req, res )
 			try {
-				await ls.method( req, {
-					send: data  => {
-						const d = data[0]
-						if (!d) {
-							res.status( 500 ).send( { message: `${ req.query.url} does not exist`})
-						} else if ( !d.file ) {
-							res.status( 500 ).send( { message: `${ req.query.url} is a directory`})
-						} else {
-							res.sendFile( data[0].url )
-						}
-						
-					}
-				})
+				const data = await fs.readFileSync( req.query.path, 'utf8' )
+				res.send( data )
+				// res.sendFile( req.query.path )
 			} catch( err ) {
 				res.status(404).send({ message: `Could not find ${ req.query.url }` })
 			}

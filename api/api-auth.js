@@ -61,7 +61,7 @@ module.exports = [
 	},
 	{
 		type: 'use',
-		method: flash(),
+		method: () => flash(),
 		description: 'storing log errors with flash()',
 		category: types.CAT_AUTH
 	},
@@ -95,7 +95,6 @@ module.exports = [
 					<p><input type="submit" value="Login"></p>
 					<p style="color: hsl(0, 90%, 70%)">${req.flash('error')}</p>
 				</form>
-				
 			` + style)
 		}
 	},

@@ -9,4 +9,7 @@ const api = require( './api/api-config.js' )
 .concat( require('./api/api-proc.js') )
 .concat( require('./api/api-sys.js') )
 
-module.exports = api
+module.exports = {
+  list: api,
+  keys: api.reduce( (o, i) => { o[i.url] = i; return o; }, {})
+}
