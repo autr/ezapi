@@ -4,7 +4,6 @@
 	let categories = []
 	let endpoints = []
 	let keyed = {}
-	let oi = 'aaaa'
 
 	onMount(async () => {
 		const res = await fetch(`/endpoints`)
@@ -18,63 +17,117 @@
 			}
 			idx = categories.indexOf(k)
 			endpoints[idx].push( e )
-			keyed[ e.url ] = e
+			keyed[ e.type + e.url + e.desc ] = e
 		})
 		endpoints = endpoints.reverse().reverse()
-		oi = 'bbbb'
 	})
 
 
 	let _current
 	$: current = keyed[_current]
 	let values = {}
+	function setParams() {
+		if (!current) return (params = '')
+		params = '?'
+		const keys = Object.keys(current.schema)
+		for (let i = 0; i < keys.length; i++) {
+			const  k = keys[i]
+			if (values[k]) params += `${ i == 0 ? '' : ',' }${k}=${values[k]}`
+		}
+	}
+	let params = ''
+	let permissions = false
+
+
+	function send() {
+		
+	}
 </script>
 
 <main>
-	<div class="flex" style="height:100vh">
-		<div class="flex flex-column grow no-basis br1-solid">
+	<div class="flex h100vh no-basis">
+		<div class="flex flex-column grow br1-solid no-basis">
 
-			<div class="p1 overflow-auto bb1-solid grow no-basis">
+			<div class="ptb1 overflow-auto bb1-solid">
 
-				<div class="plr1 ptb0-5"><span class="f4">API</span></div>
+				<div class="flex plr2 ptb0-4 align-items-flex-end justify-content-between">
+					<div class="f4">API</div>
+					<button 
+						class:filled={permissions}
+						on:click={e => permissions = !permissions}>
+						Permissions
+					</button>
+				</div>
 				{#each endpoints as ee, i}
-					<div class="plr1 ptb0-4"><span class="f4">{categories[i]}</span></div>
+					<div class="plr2 ptb0-4"><span class="f4">{categories[i]}</span></div>
 					{#each ee as e, ii}
-						<div 
-							on:click={ a => _current = e.url }
-							class:filled={ _current == e.url }
-							class="flex justify-content-between plr1 ptb0-4 pointer">
-							<div>
-								<span class="f1 w40px inline-block">{e.type.toUpperCase()}</span> 
-								{#if e.type != 'use' }
-									<span>{e.url}</span>
-								{:else}
-									<span>{e.url || ''}</span>
-								{/if} 
+						{#if e.type == 'get' || e.type == 'post' || e.type == 'ws' }
+							<div 
+								on:click={ a => _current = e.type + e.url + e.desc }
+								class:pop={ _current == e.type + e.url + e.desc }
+								class="flex justify-content-between plr2 ptb0-4 pointer align-items-center">
+								<div class="flex align-items-center">
+									<div class="f1 w40px inline-block">{e.type.toUpperCase()}</div> 
+									{#if e.type =='get'}
+										<a
+											href={e.url}
+											target="_blank"
+											class="sink highlight plr0-8 ptb0-4">{e.url}</a>
+									{:else}
+										<div class="sink highlight plr0-8 ptb0-4">{e.url}</div>
+									{/if} 
+									{#each Object.entries(e.schema || {}) as [key, value]}
+										<div class="pop plr0-8 ptb0-4 fade">{key}</div>
+									{/each}
+								</div>
+								<div>	
+									{e.description}
+								</div>
 							</div>
-							<div>	
-								{e.description}
-							</div>
-						</div>
-							<!-- {JSON.stringify(e)} -->
+						{/if}
 					{/each}
 				{/each}
 			</div>
-
 		</div>
 		<div class="flex flex-column grow no-basis">
-			<div class="flex grow no-basis p1 overflow-auto bb1-solid">
-				{#if current}
-					<div class="f4 pb0-8">{current.url}</div>
-					{#each Object.entries(current.schema || {}) as [key, value]}
-						<input class="flex grow" required={value.required} bind:value={ values[key] } placeholder={value.desc} />
-					{/each}
-					{#if current.schema }<div><button>Send</button></div>{/if}
-				{:else}
-					No endpoint current.
-				{/if}
+
+
+			<div class="ptb1 basis-auto bb1-solid" style="flex-basis: auto">
+				<div class="plr2 ptb0-4"><span class="f4">Endpoint</span></div>
+				<div class="p2">
+					{#if current}
+						{#each Object.entries(current.schema || {}) as [key, value]}
+							<div class="flex align-items-center pb0-8">
+								<div class="basis80px">{key}{value.required ? '*' : ''}</div>
+								{#if value.type == 'boolean'}
+									<input 
+										type="checkbox" 
+										required={value.required} 
+										bind:value={ values[key] } />
+								{:else}
+									<input 
+										class="flex grow" 
+										required={value.required} 
+										bind:value={ values[key] } 
+										on:keyup={setParams} 
+										placeholder={value.desc} />
+								{/if}
+							</div>
+						{/each}
+						<div class="flex align-items-flex-end justify-content-between">
+							<div class="f3">
+								{current.url}{#if current.type == 'get'}<span>{params}</span>{/if}
+							</div>
+							<button class="ptb0-4 plr1" on:click={send}>Send {current.type.toUpperCase()}</button>
+						</div>
+					{:else}
+						<div>No endpoint current.</div>
+					{/if}
+				</div>
 			</div>
-			<div class="flex grow no-basis p1 overflow-auto">
+
+			<div class="ptb1 flex grow overflow-auto">
+				<div class="plr2 ptb0-4"><span class="f4">Response</span></div>
 
 			</div>
 

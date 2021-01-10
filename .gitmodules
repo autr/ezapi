@@ -4,3 +4,9 @@
 [submodule "modules/xpm2png"]
 	path = modules/xpm2png
 	url = https://github.com/autr/xpm2png
+[submodule "dev/ini"]
+	path = dev/ini
+	url = https://github.com/npm/ini.git
+[submodule "modules/ini"]
+	path = modules/ini
+	url = https://github.com/npm/ini.git

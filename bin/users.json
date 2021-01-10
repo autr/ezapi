@@ -1,0 +1,13 @@
+[
+    {
+        "username": "guest",
+        "allows": "*",
+        "disallows": "post"
+    },
+    {
+        "username": "oioi",
+        "password": "oioi",
+        "allows": "*",
+        "disallows": "post"
+    }
+]

@@ -11,7 +11,7 @@ module.exports = [
 
 	{
 		url: '/xpm2png',
-		type: 'get',
+		type: 'post',
 		description: 'retrieve a png from xpm',
 		category: types.CAT_MEDIA,	
 		schema: {
@@ -25,17 +25,17 @@ module.exports = [
 			const input = params.path
 			const name = path.basename( input )
 			const output = path.join( __dirname, '../bin/icons/' + name + '.png' )
-			if (await fs.fileExistsSync(output)) return output
+			if (await fs.existsSync(output)) return output
 			const img = await xpm2png( input, true )
 			const file = await img.writeAsync( output )
 			return output
 		},
-		next: async (data, req, res) => res.sendFile( data )
+		next: async (req, res, data) => res.sendFile( data )
 	},
 	{
 		url: '/icons',
 		type: 'get',
-		description: 'application icon',
+		description: 'find application icons',
 		category: types.CAT_MEDIA,	
 		schema: {
 			iname: {

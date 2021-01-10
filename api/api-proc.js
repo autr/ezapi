@@ -18,7 +18,7 @@ module.exports = [
 	{
 		url: '/snapshot',
 		type: 'get',	
-		description: 'active processes and pids',
+		description: 'all active processes and pids',
 		category: types.CAT_PROC,
 		schema: {},
 		data: async params => await snapshot(
@@ -40,7 +40,7 @@ module.exports = [
 
 	{
 		url: '/open',
-		type: 'get',
+		type: 'post',
 		description: 'open anything with default apps',
 		category: types.CAT_PROC,
 		schema: {
@@ -74,7 +74,7 @@ module.exports = [
 	},
 	{
 		url: '/spawn',
-		type: 'get',
+		type: 'post',
 		description: 'spawn a process',
 		category: types.CAT_PROC,
 		schema: {
@@ -108,7 +108,7 @@ module.exports = [
 	},
 	{
 		url: '/pkill',
-		type: 'get',
+		type: 'post',
 		description: 'kill by app name',
 		category: types.CAT_PROC,
 		schema: {
@@ -125,7 +125,7 @@ module.exports = [
 	},
 	{
 		url: '/kill',
-		type: 'get',
+		type: 'post',
 		description: 'kill by pid',
 		category: types.CAT_PROC,
 		schema: {

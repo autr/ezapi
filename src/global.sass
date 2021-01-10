@@ -32,58 +32,39 @@
 html
 	+reset
 	+terminal-structure
-	// +terminal-code( $inv )
 	+shorthand
 	+fontsize(13px)
 	font-family: sans-serif
 
+
+	$sat: 95%
+	$li: 70%
+	$hue: 200
+	$inv: true 
+
+	+bg( terminal-color($hue, 10%, 5%, $inv), 8 )
+
+
+	$text: terminal-color($hue, 10%, 80%, $inv)
+	$bright: terminal-color($hue, 10%, 95%, $inv)
+	$fade: terminal-color($hue, 10%, 40%, $inv)
+
+	$green: terminal-color(150, $sat, $li, $inv )
+	$blue: terminal-color(200, $sat, $li, $inv )
+	$red: terminal-color(340, $sat, $li, $inv )
+	$yellow: terminal-color(50, $sat, $li, $inv )
+	
+	+terminal-colors( $text ) 
+	+terminal-colors( $green, success selected added new created create add )
+	+terminal-colors( $blue, info ok placid )
+	+terminal-colors( $red, error unselected removed deleted remove delete )
+	+terminal-colors( $yellow, alert warning )
+	+terminal-colors( $bright, strong highlight bright )
+	+terminal-colors( $fade, fade disabled unimportant ) 
+
+	+terminal-colors( $text, plain text ) 
+
 	body
-
-		.cold
-
-			$hue: 200
-			$bg: hsl($hue, 100%, 45%)
-			$txt: hsl($hue, 100%, 90%)
-			+raw-theme( $bg, $txt )
-			// *
-			// 	text-shadow: -1px -1px 1px hsl($hue, 100%, 35%)
-			// .filled, .filled *
-			// 	text-shadow: 1px 1px 1px hsl($hue, 100%, 94%)
-
-		.hot 
-
-			$hue: 50
-			$bg: hsl($hue, 100%, 65%)
-			$txt: hsl($hue - 25, 100%, 50%)
-			+raw-theme( $bg, $txt )
-			// *
-			// 	text-shadow: 1px 1px 1px hsl($hue + 6, 100%, 65%)
-			// .filled, .filled *
-			// 	text-shadow: -1px -1px 1px hsl($hue - 25, 100%, 45%)
-		.dark
-
-			$hue: 210  // 52	61	70	
-			$bg: hsl($hue, 14%, 20%)
-			$txt: hsl($hue + 20, 30%, 85%)
-			+raw-theme( $bg, $txt )
-		.light
-			$hue: 210  // 52	61	70	
-			$bg: hsl($hue, 14%, 95%)
-			$txt: hsl($hue + 20, 10%, 30%)
-			+raw-theme( $bg, $txt )
-
-		.lux
-			$hue: 210  // 52	61	70	
-			$bg: hsl($hue, 20%, 86%)
-			$txt: hsl($hue + 50, 30%, 30%)
-			+raw-theme( $bg, $txt )
-
-		.new
-			$hue: 340  // 52	61	70	
-			$bg: hsl($hue, 90%, 60%)
-			$txt: hsl($hue - 50, 100%, 85%)
-			+raw-theme( $bg, $txt )
-
 
 		$sidebar: 200px
 		$header: 40px

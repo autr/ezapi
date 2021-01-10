@@ -1,81 +1,70 @@
+// READ: https://levelup.gitconnected.com/everything-you-need-to-know-about-the-passport-local-passport-js-strategy-633bbab6195
+
 const types = require('../types.js')
 const flash = require('connect-flash')
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
-
 const fs = require('fs')
 const path = require('path')
 
-// resolve users data
+passport.use('login', new LocalStrategy( async (username, password, done) => {
 
-const a = path.resolve(__dirname, '../users.template.js')
-const b = path.resolve(__dirname, '../users.js')
-const exists = fs.existsSync( b )
-if ( !exists ) {
-	console.log(`[api.js] 🌐 🚨  creating default: "${b}"`)
-	fs.copyFileSync( a, b )
-}
-
-const users = require('../users.js')
-const user = users[0]
-
-passport.use('login', new LocalStrategy(
-	(username, password, done) => {
-		const match = (username === user.username && password === user.password)
-		if( match ) {
-			return done( null, user )
-		} else {
-			done(null, false, { message: 'Invalid username and password.' })
+	console.log('[api-auth] ⚡️  logging in:', username)
+	try {
+		const users = JSON.parse( await (await fs.readFileSync( path.resolve(__dirname, '../bin/users.json'))).toString() )
+		const u = users.find( o => o.username == username )
+		if (!u)  {
+			const m = `no user with name "${username}" found`
+			console.log('[api-auth] 🛑  error logging in:', m)
+			return done(null, false, { message: m } )
 		}
+		if (u.password != password)  {
+			const m = `incorrect password for "${username}"`
+			console.log('[api-auth] 🛑  error logging in:', m)
+			return done(null, false, { message: m } )
+		}
+		console.log('[api-auth] ✅  success logging in:', username)
+		return done(null, u)
+	} catch(err) {
+		console.log('[api-auth] ❌  error logging in:', err.message)
+		return done( JSON.stringify({ error: err.message }, null, 2) )
 	}
-))
 
-// required for storing user info into session 
+}))
 
-passport.serializeUser( (user, done) => {
-	done(null, user._id)
+
+passport.serializeUser( async (u, done) => {
+	console.log('[api-auth] ⚡️  serializing:', u.username)
+	done(null, u.username)
 })
  
-// required for retrieving user from session
 
-passport.deserializeUser( (id, done) => {
+passport.deserializeUser( async (username, done) => {
+	try {
 
-	// the user should be queried against db, using the id
+		const users = JSON.parse( await ( await fs.readFileSync( path.resolve(__dirname, '../bin/users.json') ) ).toString() )
+		const u = users.find( uu => uu.username == username )
+		console.log('[api-auth] ✅  deserialized:', username)
+		done(null, u)
+	} catch( err ) {
+		console.log('[api-auth] ❌  could not be deserialized:', err.message)
+		done(null, null)
+	}
 	
-	done(null, user)
 })
 
 module.exports = [
-
-	{
-		type: 'use',
-		data: passport.initialize(),
-		description: 'auth initialize',
-		category: types.CAT_AUTH
-	},
-	{
-		type: 'use',
-		data: passport.session(),
-		description: 'auth session',
-		category: types.CAT_AUTH
-	},
-	{
-		type: 'use',
-		data: flash(),
-		description: 'storing log errors with flash()',
-		category: types.CAT_AUTH
-	},
 
 	// ---------------- CAT_AUTH ----------------
 
 	{
 		url: '/logout',
-		type: 'get',
+		type: 'post',
 		description: 'log out of api',
 		category: types.CAT_AUTH,
 		schema: {},
-		data: async params => null,
-		next: async (data, req, res) => {
+		emoji: '🔑',
+		next: async (req, res, data) => {
 			req.logout()
 			res.redirect('/')
 		}
@@ -83,29 +72,38 @@ module.exports = [
 	{
 		url: '/login',
 		type: 'get',
-		description: 'log into api',
+		description: 'basic HTML login',
 		category: types.CAT_AUTH,
 		schema: {},
-		data: async params => null,
-		next: async (data, req, res) => res.send(`
+		emoji: '🔑',
+		next: async (req, res, data) => res.send(`
 				<form action="/login" method="POST">
 					<p><input name="username"></p>
 					<p><input name="password"></p>
 					<p><input type="submit" value="Login"></p>
 					<p style="color: hsl(0, 90%, 70%)">${req.flash('error')}</p>
-				</form> ` + style )
+				</form> ` )
 	},
 	{
 		url: '/login',
 		type: 'post',
-		description: 'post username and password to log in',
+		description: 'login with username and password',
 		category: types.CAT_AUTH,
 		schema: {},
-		data: async params => null,
-		next: async (data, req, res) => passport.authenticate('login', {
+		emoji: '🔑',
+		next: passport.authenticate('login', {
 			successRedirect: '/',
 			failureRedirect: '/login',
 			failureFlash: true
 		})
+	},
+	{
+		url: '/status',
+		type: 'get',
+		description: 'authorisation status',
+		category: types.CAT_AUTH,
+		schema: {},
+		emoji: '🔒',
+		data: e => null
 	}
 ]

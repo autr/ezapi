@@ -38,4 +38,6 @@ const self = {
 
 }
 
+// rm -rf ~/.config/chromium/Singleton*
+
 module.exports = self

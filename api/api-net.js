@@ -14,10 +14,10 @@ module.exports = [
 		category: types.CAT_NET,
 		schema: {},
 		data: async params => {
-			ifconfig.status( (err, data) => {
-				if (err) throw err
-				return data
-			}) 
+			return new Promise( (resolve, reject) => ifconfig.status( (err, data) => {
+				if (err) return reject(err)
+				resolve(data)
+			}) )
 			
 		}
 	},
@@ -28,10 +28,10 @@ module.exports = [
 		category: types.CAT_NET,
 		schema: {},
 		data: async params => {
-			iwconfig.status( (err, data) => {
-				if (err) throw err
-				return data
-			})	
+			return new Promise( (resolve, reject) => iwconfig.status( (err, data) => {
+				if (err) return reject(err)
+				resolve(data)
+			}))
 		}
 	},
 	{
@@ -47,13 +47,13 @@ module.exports = [
 			}
 		},
 		data: async params => {
-			iwlist.scan( { 
+			return new Promise( (resolve, reject) => iwlist.scan( { 
 					iface: params.iface || 'wlan0',
 					show_hidden: true
 				}, (err, data) => {
-				if (err) throw err
-				return data
-			}) 
+				if (err) return reject(err)
+				resolve(data)
+			}) )
 			
 		}
 	},
@@ -70,16 +70,16 @@ module.exports = [
 			}
 		},
 		data: async params => {
-			wpa.status( params.iface || 'wlan0', (err, data) => {
-				if (err) throw err
-				return data
-			}) 
+			return new Promise( (resolve, reject) => wpa.status( params.iface || 'wlan0', (err, data) => {
+				if (err) return reject(err)
+				resolve(data)
+			}) )
 			
 		}
 	},
 	{
 		url: '/wpa_supplicant_enable',
-		type: 'get',	
+		type: 'post',	
 		description: 'connect to wifi network',
 		category: types.CAT_NET,
 		schema: {
@@ -107,15 +107,15 @@ module.exports = [
 			  driver: 'wext'
 			}
 			if (!params.ssid) return res.status(500).send({ message: 'no ssid supplied'})
-			wpa_supplicant.enable( opts, params.pass || '', (err, data) => {
-				if (err) throw err
-				return data
-			}) 
+			return new Promise( (resolve, reject) => wpa_supplicant.enable( opts, params.pass || '', (err, data) => {
+				if (err) return reject(err)
+				resolve(data)
+			}) )
 		}
 	},
 	{
 		url: '/connect',
-		type: 'get',	
+		type: 'post',	
 		description: 'connect to wifi network',
 		category: types.CAT_NET,
 		schema: {
@@ -132,10 +132,10 @@ module.exports = [
 		},
 		data: async params => {
 			if (!params.ssid) return res.status(500).send({ message: 'no ssid supplied'})
-			pi_wifi.connect( params.ssid, params.pass || '', (err, data) => {
-				if (err) throw err
-				return data
-			}) 
+			return new Promise( (resolve, reject) => pi_wifi.connect( params.ssid, params.pass || '', (err, data) => {
+				if (err) return reject(err)
+				resolve(data)
+			}))
 		}
 	}
 
