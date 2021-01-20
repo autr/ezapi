@@ -23,18 +23,18 @@ const isAllowed = async (req, res, item) => {
         const allows = user.allows || ''
         const disallows = user.disallows || ''
         let a = allows.split(',')
-        if (allows == '*') a = Object.keys(api.keys)
-        if (allows == 'get') a = api.list.filter( i => i.type == 'get' ).map( i => i.url )
-        if (allows == 'post') a = api.list.filter( i => i.type == 'post' ).map( i => i.url )
+        if (allows == '*') a = api.list.map( i => i.type + i.url )
+        if (allows == 'get') a = api.list.filter( i => i.type == 'get' ).map( i => i.type + i.url )
+        if (allows == 'post') a = api.list.filter( i => i.type == 'post' ).map( i => i.type + i.url )
 
         let d = disallows.split(',')
-        if (disallows == '*') d = Object.keys(api.keys)
-        if (disallows == 'get') d = api.list.filter( i => i.type == 'get' ).map( i => i.url )
-        if (disallows == 'post') d = api.list.filter( i => i.type == 'post' ).map( i => i.url )
+        if (disallows == '*') d = api.list.map( i => i.type + i.url )
+        if (disallows == 'get') d = api.list.filter( i => i.type == 'get' ).map( i => i.type + i.url )
+        if (disallows == 'post') d = api.list.filter( i => i.type == 'post' ).map( i => i.type + i.url )
 
-        a = a.filter( a => d.indexOf(a) == -1 && a != '' )
+        a = a.filter( s => d.indexOf(s) == -1 && s != '' )
 
-        if ( a.indexOf( req.path ) != -1 ) {
+        if ( a.indexOf( req.method.toLowerCase() + req.path ) != -1 ) {
             // check arguments
             return true
         }

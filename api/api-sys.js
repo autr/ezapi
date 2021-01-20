@@ -9,6 +9,7 @@ const ini = require('../modules/ini')
 const fs = require('fs')
 const path = require('path')
 const config_schema = require('./config.schema.js')
+const videocore = require('../modules/videocore')
 
 module.exports = [
 
@@ -157,6 +158,46 @@ module.exports = [
 
 			return ini.encode( o )
 
+		}
+	},
+	{
+		url: '/vcgencmd',
+		type: 'get',	
+		description: 'view all possible vcgencmd commands',
+		category: types.CAT_SYS,
+		schema: {},
+		returns: 'json',
+		data: async params => {
+			return await videocore.commands()
+		}
+	},
+	{
+		url: '/vcgencmd',
+		type: 'post',	
+		description: 'VideoCore GPU info via vcgencmd',
+		category: types.CAT_SYS,
+		schema: {
+			args: {
+				type: 'string',
+				required: true,
+				desc: 'run vcgencmd with arguments'
+			}
+		},
+		returns: 'json',
+		data: async params => {
+			return await videocore.commands()
+		}
+	},
+	{
+		url: '/videocore',
+		type: 'get',	
+		description: 'report VideoCore GPU information',
+		category: types.CAT_SYS,
+		schema: {
+		},
+		returns: 'json',
+		data: async params => {
+			return await videocore.report()
 		}
 	}
 ]

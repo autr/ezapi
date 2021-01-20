@@ -10,3 +10,6 @@
 [submodule "modules/ini"]
 	path = modules/ini
 	url = https://github.com/npm/ini.git
+[submodule "modules/videocore"]
+	path = modules/videocore
+	url = https://github.com/autr/videocore
