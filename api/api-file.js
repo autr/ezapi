@@ -70,6 +70,7 @@ module.exports = [
 			let search = '-iname '
 			iname.forEach( (n, i) => search += (i > 0) ? `-o -iname '${n}' ` : n )
 			const cmd = `find ${ paths } ${search}`
+			console.log(cmd, params)
 			const e = await execSync( cmd )
 			return e.toString().split('\n').filter( e => e != '' )
 		}

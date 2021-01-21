@@ -2,7 +2,7 @@
     {
         "username": "guest",
         "allows": "*",
-        "disallows": "post"
+        "disallows": "/open,/spawn,/pkill,/kill,/connect,/wpa_supplicant_enable,/script,/vcgencmd,/config"
     },
     {
         "username": "oioi",

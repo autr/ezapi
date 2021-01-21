@@ -17,7 +17,7 @@
 			}
 			idx = categories.indexOf(k)
 			endpoints[idx].push( e )
-			keyed[ e.type + e.url + e.desc ] = e
+			keyed[ e.type + e.url + e.description ] = e
 		})
 		endpoints = endpoints.reverse().reverse()
 	})
@@ -32,16 +32,56 @@
 		const keys = Object.keys(current.schema)
 		for (let i = 0; i < keys.length; i++) {
 			const  k = keys[i]
-			if (values[k]) params += `${ i == 0 ? '' : ',' }${k}=${values[k]}`
+			if (values[k]) params += `${ i == 0 ? '' : '&' }${k}=${values[k]}`
 		}
 	}
 	let params = ''
 	let permissions = false
 
+	let formEl
 
-	function send() {
-		
+	async function post( url, args ) {
+		console.log('[Overview] POST', url, args)
+
+		for (const [key, value] of Object.entries(args)) {
+			try {
+				args[key] = JSON.parse(value)
+			} catch(err) {
+				
+			}
+		}
+
+		return await fetch(url,
+		{
+		    headers: {
+		      'Accept': 'application/json',
+		      'Content-Type': 'application/json'
+		    },
+		    method: 'POST',
+		    body: JSON.stringify(args)
+		})
 	}
+	async function get( url, args ) {
+		console.log('[Overview] GET', url, args)
+		return await fetch(url + params)
+	}
+
+	let response
+	let waiting = false
+
+	async function send( e ) {
+		e.preventDefault()
+		e.stopPropagation()
+		response = ''
+	    const form = new FormData(formEl)
+		const args = Object.fromEntries(form.entries())
+		waiting = true
+		if (current.type == 'get') response = await (await get( current.url, args )).json()
+		if (current.type == 'post') response = await (await post( current.url, args )).json()
+		waiting = false
+	}
+
+	$: responseStr = ( typeof(response) == 'object' || typeof(response) == 'array' ) ? JSON.stringify(response, null, 2) : response
 </script>
 
 <main>
@@ -63,8 +103,8 @@
 					{#each ee as e, ii}
 						{#if e.type == 'get' || e.type == 'post' || e.type == 'ws' }
 							<div 
-								on:click={ a => _current = e.type + e.url + e.desc }
-								class:pop={ _current == e.type + e.url + e.desc }
+								on:click={ a => (_current = e.type + e.url + e.description) && (response = '') }
+								class:pop={ _current == e.type + e.url + e.description }
 								class="flex justify-content-between plr2 ptb0-4 pointer align-items-center">
 								<div class="flex align-items-center">
 									<div class="f1 w40px inline-block">{e.type.toUpperCase()}</div> 
@@ -96,39 +136,52 @@
 				<div class="plr2 ptb0-4"><span class="f4">Endpoint</span></div>
 				<div class="p2">
 					{#if current}
-						{#each Object.entries(current.schema || {}) as [key, value]}
-							<div class="flex align-items-center pb0-8">
-								<div class="basis80px">{key}{value.required ? '*' : ''}</div>
-								{#if value.type == 'boolean'}
-									<input 
-										type="checkbox" 
-										required={value.required} 
-										bind:value={ values[key] } />
-								{:else}
-									<input 
-										class="flex grow" 
-										required={value.required} 
-										bind:value={ values[key] } 
-										on:keyup={setParams} 
-										placeholder={value.desc} />
-								{/if}
+						<form bind:this={formEl}>
+							{#each Object.entries(current.schema || {}) as [key, value]}
+								<div class="flex align-items-center pb0-8">
+									<div class="basis80px">{key}{value.required ? '*' : ''}</div>
+									{#if value.type == 'boolean'}
+										<input 
+											name={key}
+											type="checkbox" 
+											required={value.required} 
+											bind:value={ values[key] } />
+									{:else if value.type == 'object' || value.type == 'array' }
+										<textarea 
+											name={key}
+											class="flex grow p0-6" 
+											rows={'6'}
+											required={value.required} 
+											bind:value={ values[key] } 
+											on:keyup={setParams} 
+											placeholder={value.desc} />
+									{:else}
+										<input 
+											name={key}
+											class="flex grow p0-6" 
+											required={value.required} 
+											bind:value={ values[key] } 
+											on:keyup={setParams} 
+											placeholder={value.desc} />
+									{/if}
+								</div>
+							{/each}
+							<div class="flex align-items-flex-end justify-content-between">
+								<div class="f3">
+									{current.url}{#if current.type == 'get'}<span>{params}</span>{/if}
+								</div>
+								<button disabled={waiting} class="ptb0-4 plr1" on:click={send}>{(waiting) ? 'waiting' : current.type.toUpperCase()}</button>
 							</div>
-						{/each}
-						<div class="flex align-items-flex-end justify-content-between">
-							<div class="f3">
-								{current.url}{#if current.type == 'get'}<span>{params}</span>{/if}
-							</div>
-							<button class="ptb0-4 plr1" on:click={send}>Send {current.type.toUpperCase()}</button>
-						</div>
+						</form>
 					{:else}
 						<div>No endpoint current.</div>
 					{/if}
 				</div>
 			</div>
 
-			<div class="ptb1 flex grow overflow-auto">
+			<div class="ptb1 grow overflow-auto">
 				<div class="plr2 ptb0-4"><span class="f4">Response</span></div>
-
+				<div class="p2" style="font-family:monospace;white-space:pre-wrap">{@html (waiting) ? 'waiting' : responseStr || '~' }</div>
 			</div>
 
 		</div>

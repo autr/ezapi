@@ -5,3 +5,5 @@ assets/*.js.map
 ._*
 yarn-error.log
 yarn.lock
+db/*
+bin/*

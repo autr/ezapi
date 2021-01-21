@@ -5,7 +5,28 @@ const fs = require('fs')
 const path = require('path')
 const { inform } = require( './websockets.js' )
 const { API_ERR, API_TRY, API_SUCCESS, API_OPEN, API_STDOUT, API_STDERR, API_CLOSE } = require('./types.js')
+const { match, parse, exec } = require('matchit')
+const validate = require('jsonschema').validate
 
+
+const getPermittedArray = ( listStr ) => {
+
+    if (!listStr) return []
+    const types = ['*', 'get', 'post', 'delete', 'put' ]
+    let arr = []
+    listStr.split(',').forEach( str => {
+        if ( types.indexOf(str) != -1 ) {
+            arr = arr.concat( 
+                api.list
+                    .filter( item => (item.type == str || str == '*') && types.indexOf( item.type ) != -1 )
+                    .map( item => `/${item.type}${item.url}` )
+            )
+        } else {
+            arr.push( str )
+        }
+    })
+    return arr
+}
 
 const isAllowed = async (req, res, item) => {
 
@@ -20,23 +41,22 @@ const isAllowed = async (req, res, item) => {
     }
     if ( user && isAuth ) {
 
-        const allows = user.allows || ''
         const disallows = user.disallows || ''
-        let a = allows.split(',')
-        if (allows == '*') a = api.list.map( i => i.type + i.url )
-        if (allows == 'get') a = api.list.filter( i => i.type == 'get' ).map( i => i.type + i.url )
-        if (allows == 'post') a = api.list.filter( i => i.type == 'post' ).map( i => i.type + i.url )
+        const types = ['*', 'get', 'post', 'delete', 'put' ]
 
-        let d = disallows.split(',')
-        if (disallows == '*') d = api.list.map( i => i.type + i.url )
-        if (disallows == 'get') d = api.list.filter( i => i.type == 'get' ).map( i => i.type + i.url )
-        if (disallows == 'post') d = api.list.filter( i => i.type == 'post' ).map( i => i.type + i.url )
 
-        a = a.filter( s => d.indexOf(s) == -1 && s != '' )
+        const yes = getPermittedArray( user.allows )
+        const no = getPermittedArray( user.disallows )
+        const filtered = yes.filter( item => no.indexOf(item) == -1 )
+        const allowed = filtered.map( parse )
 
-        if ( a.indexOf( req.method.toLowerCase() + req.path ) != -1 ) {
-            // check arguments
-            return true
+        const find = `/${req.method.toLowerCase()}${req.path}`
+
+        const found = match(find, allowed)
+
+        if (found.length > 0) {
+            const params = exec(find, found)
+            return params
         }
     }
     return false 
@@ -55,19 +75,39 @@ api.list.forEach( item => {
 
                 // authorise endpoint
 
-                const auth = await isAllowed(req, res, item)
+                const regex = await isAllowed(req, res, item)
 
-                if (!auth) {
+                if (!regex) {
+                    console.log(`[api] 🛑  "${req?.user?.username}" not authorised: allows="${req?.user?.allows || '~'}" disallows="${req?.user?.disallows || '~'}" -> ${item.type} ${item.url}` )
                     res.status(401).send( { error: 'not authorised' } )
-                    console.log(`[api] 🛑  not authorised: "${req.user || '~'}"` )
                     return
                 }
 
                 const user = {}
+                const args = ( item.type.toLowerCase() == 'get' ) ? req.query : req.body
+
+                // check schema
+
+                const schema = {
+                    type: 'object',
+                    properties: item.schema
+                }
+
+                const result = validate( args, schema, {required: true} )
+
+                if (!result.valid) {
+                    const errs = result.errors.map( e => e.stack.trim() ).join(', ')
+                    console.log(`[api] 🛑  invalid schema "${errs}" -> ${item.type} ${item.url}` )
+                    console.log('[api] ->', args, schema )
+                    res.status(422).send( { error: errs } )
+                    return
+                }
+
+
 
                 // process data
 
-                const data = (item.data) ? await item.data( req.query, user ) : null
+                const data = (item.data) ? await item.data( { ...args, regex }, user ) : null
 
                 // perform res and req
 
@@ -75,8 +115,9 @@ api.list.forEach( item => {
                 return send( req, res, data )
                 
             } catch(err) {
-                inform( process.pid, API_ERR, err.message )
-                res.send( { error: err.message } )
+                inform( process.pid, API_ERR, err.message || err )
+                console.error( err )
+                res.send( { error: err.message || err } )
             }
         })
 	}

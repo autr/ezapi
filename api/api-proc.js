@@ -9,6 +9,20 @@ const { API_ERR, API_TRY, API_SUCCESS, API_OPEN, API_STDOUT, API_STDERR, API_CLO
 
 let spawned = {}
 
+
+const WHOAMI = spawn( 'sudo', [ 'id' ], {})
+
+function yoyoyo(data) {
+
+	console.log(`\n-----------------------\n${data}\n-----------------------\n`)
+}
+
+WHOAMI.stdout.on('data', yoyoyo);
+
+WHOAMI.stderr.on('error', yoyoyo);
+
+WHOAMI.on('close', yoyoyo);
+
 module.exports = [
 
 
@@ -51,24 +65,24 @@ module.exports = [
 			}
 		},
 		data: async params => {
-			const born = await open(params.path || '', { wait: false } )
-			born.stdout.on( 'data', ( data ) => {
-				console.log(`stdout: ${data}`);
-			})
+			// const born = await open(params.path || '', { wait: false } )
+			// born.stdout.on( 'data', ( data ) => {
+			// 	console.log(`stdout: ${data}`);
+			// })
 
-			born.stderr.on( 'data', ( data ) => {
-				console.error(`stderr: ${data}`);
+			// born.stderr.on( 'data', ( data ) => {
+			// 	console.error(`stderr: ${data}`);
 
-			})
-			born.on( 'close', ( code ) => {
-			  console.log(`child process CLOSED with code ${code}`);
+			// })
+			// born.on( 'close', ( code ) => {
+			//   console.log(`child process CLOSED with code ${code}`);
 
-			})
-			born.on( 'exit', ( code ) => {
-			  console.log(`child process EXITED with code ${code}`);
+			// })
+			// born.on( 'exit', ( code ) => {
+			//   console.log(`child process EXITED with code ${code}`);
 
-			})
-			return Object.keys(born)
+			// })
+			// return Object.keys(born)
 
 		}
 	},
@@ -90,20 +104,20 @@ module.exports = [
 			}
 		},
 		data: async params => {
-			const cmd = params.bin || ''
-			const args = (params.args || '').split(',')
+			// const cmd = params.bin || ''
+			// const args = (params.args || '').split(',')
 
-			const born = await spawn( cmd, args, {})
-			const { pid, spawnfile, spawnargs } = born
+			// const born = await spawn( cmd, args, {})
+			// const { pid, spawnfile, spawnargs } = born
 
-			spawned[pid] = born
+			// spawned[pid] = born
 
-			born.stdout.on( 'data', ( data ) => inform( pid, API_STDOUT, data.toString()))
-			born.stderr.on( 'data', ( data ) => inform( pid, API_STDERR, data.toString()) )
-			born.on( 'close', ( code ) => inform( pid, API_STDERR, `closed with code "${code}"`) && delete spawned[pid] )
-			born.on( 'exit', ( code ) => inform( pid, API_STDERR, `exited with code "${code}"`) && delete spawned[pid] )
+			// born.stdout.on( 'data', ( data ) => inform( pid, API_STDOUT, data.toString()))
+			// born.stderr.on( 'data', ( data ) => inform( pid, API_STDERR, data.toString()) )
+			// born.on( 'close', ( code ) => inform( pid, API_STDERR, `closed with code "${code}"`) && delete spawned[pid] )
+			// born.on( 'exit', ( code ) => inform( pid, API_STDERR, `exited with code "${code}"`) && delete spawned[pid] )
 
-			return { pid, spawnfile, spawnargs }
+			// return { pid, spawnfile, spawnargs }
 		}
 	},
 	{

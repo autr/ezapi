@@ -6,21 +6,18 @@ const path = require('path')
 const express = require('express')
 const passport = require('passport')
 const flash = require('connect-flash')
-const api = require('./api-auth.js')
-.concat( require('./api-file.js') )
-.concat( require('./api-media.js') )
-.concat( require('./api-net.js') )
-.concat( require('./api-proc.js') )
-.concat( require('./api-sys.js') )
-.concat( require('./api-comms.js') )
-.concat( require('./api-cloud.js') )
-.concat( require('./api-ext.js') )
-
+const cors = require('cors')
 
 module.exports = [
 
 	// ----------- CAT_CONF -----------
 
+	{
+		type: 'use',
+		next: cors(),
+		description: 'CORS origin policy',
+		category: types.CAT_CONF
+	},
 	{
 		type: 'use',
 		next: bodyParser.json(),
@@ -66,21 +63,6 @@ module.exports = [
 		type: 'use',
 		next: express.static('assets', {etag: false, maxAge: '5000'}),
 		description: 'serves static assets',
-		category: types.CAT_CONF
-	},	
-
-	{
-		url: '/endpoints',
-		type: 'get',
-		schema: {},
-		data: async (params, user) => {
-			const endpoints = api.map( a => {
-				let { method, ...b } = a
-				return b
-			})
-			return endpoints
-		},
-		description: 'show list of API endpoints',
 		category: types.CAT_CONF
 	}
 ]

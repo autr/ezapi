@@ -13,3 +13,6 @@
 [submodule "modules/videocore"]
 	path = modules/videocore
 	url = https://github.com/autr/videocore
+[submodule "modules/dataaa-api"]
+	path = modules/dataaa-api
+	url = https://github.com/autr/dataaa-api
