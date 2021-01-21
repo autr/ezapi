@@ -9,7 +9,7 @@ let api = require( './api/api-config.js' )
 .concat( require('./api/api-sys.js') )
 .concat( require('./api/api-comms.js') )
 .concat( require('./api/api-ext.js') )
-.concat( require('./modules/ezdb/index.js').api )
+.concat( require('./modules/dataaa-api/index.js').api )
 
 
 api.push( 
@@ -35,3 +35,5 @@ module.exports = {
   list: api,
   keys: api.reduce( (o, i) => { o[i.url] = i; return o; }, {})
 }
+
+// microapi dataaa stapic miniapi miniapi-svelte-boilerplate
