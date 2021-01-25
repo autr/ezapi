@@ -6,10 +6,11 @@ const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const fs = require('fs')
 const path = require('path')
+const { pamAuthenticate } = require('node-linux-pam')
 
 passport.use('login', new LocalStrategy( async (username, password, done) => {
 
-	console.log('[api-auth] ⚡️  logging in:', username)
+	console.log('[api-auth] ⚡️  logging in with pam:', username)
 	try {
 		const users = JSON.parse( await (await fs.readFileSync( path.resolve(__dirname, '../bin/users.json'))).toString() )
 		const u = users.find( o => o.username == username )
@@ -23,6 +24,20 @@ passport.use('login', new LocalStrategy( async (username, password, done) => {
 			console.log('[api-auth] 🛑  error logging in:', m)
 			return done(null, false, { message: m } )
 		}
+
+
+		const res = await (new Promise( (resolve, reject) => {
+			pamAuthenticate( { username, password }, function(err, code) {
+				if (!err) return reject({err,code})
+				return resolve({err,code})
+			})
+		}))
+
+		if ( res.err ) {
+			console.log('[api-auth] 🛑  error logging in:', res)
+			return done(null, false, err )
+		}
+		
 		console.log('[api-auth] ✅  success logging in:', username)
 		return done(null, u)
 	} catch(err) {

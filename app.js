@@ -51,7 +51,6 @@ const isAllowed = async (req, res, item) => {
         const allowed = filtered.map( parse )
 
         const find = `/${req.method.toLowerCase()}${req.path}`
-
         const found = match(find, allowed)
 
         if (found.length > 0) {

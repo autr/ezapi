@@ -23,7 +23,7 @@ const self = {
     }
     run: o => `pkill -9 ${o.name}`
   },
-  chromium: {
+  kiosk: {
     params: {
       display: ':0',
       touchscreen: find_touchscreen_id(),

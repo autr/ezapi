@@ -1,13 +1,7 @@
 [
     {
         "username": "guest",
-        "allows": "*",
-        "disallows": "/open,/spawn,/pkill,/kill,/connect,/wpa_supplicant_enable,/script,/vcgencmd,/config"
-    },
-    {
-        "username": "oioi",
-        "password": "oioi",
-        "allows": "*",
-        "disallows": "post"
+        "allows": "get",
+        "disallows": "post,delete,push"
     }
 ]

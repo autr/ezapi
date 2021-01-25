@@ -5,4 +5,4 @@ const overview = new Overview({
 	props: {  }
 });
 
-export default overview; 
+export default overview

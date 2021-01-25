@@ -26,6 +26,7 @@
     "midi": "^1.0.0",
     "mime": "^2.4.7",
     "node-find": "^0.6.1",
+    "node-linux-pam": "^0.0.1",
     "nodemon": "^2.0.6",
     "open": "^7.3.0",
     "passport": "^0.4.1",

@@ -1,5 +1,5 @@
 
-(function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35730/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(window.document);
+(function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(window.document);
 var app = (function () {
     'use strict';
 
@@ -1062,6 +1062,7 @@ var app = (function () {
     function create_if_block_3(ctx) {
     	let textarea;
     	let textarea_name_value;
+    	let textarea_rows_value;
     	let textarea_required_value;
     	let textarea_placeholder_value;
     	let mounted;
@@ -1076,7 +1077,7 @@ var app = (function () {
     			textarea = element("textarea");
     			attr_dev(textarea, "name", textarea_name_value = /*key*/ ctx[21]);
     			attr_dev(textarea, "class", "flex grow p0-6");
-    			attr_dev(textarea, "rows", "6");
+    			attr_dev(textarea, "rows", textarea_rows_value = "6");
     			textarea.required = textarea_required_value = /*value*/ ctx[22].required;
     			attr_dev(textarea, "placeholder", textarea_placeholder_value = /*value*/ ctx[22].desc);
     			add_location(textarea, file, 149, 10, 4201);
