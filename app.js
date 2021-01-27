@@ -115,9 +115,9 @@ api.list.forEach( item => {
                 return send( req, res, data )
                 
             } catch(err) {
-                inform( process.pid, API_ERR, err.message || err )
+                inform( process.pid, API_ERR, err.message || err, err )
                 console.error( err )
-                res.send( { error: err.message || err } )
+                res.status(500).send( { error: err.message || err } )
             }
         })
 	}

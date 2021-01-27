@@ -1,5 +1,6 @@
 
-@import '../../sassis/src/_index'
+@import '../../sassis/src/defaults'
+@import '../../sassis/src/sassis'
 
 
 
@@ -30,40 +31,8 @@
 
 
 html
-	+reset
-	+terminal-structure
+	+sassis
 	+shorthand
-	+fontsize(13px)
-	font-family: sans-serif
-
-
-	$sat: 95%
-	$li: 70%
-	$hue: 200
-	$inv: true 
-
-	+bg( terminal-color($hue, 10%, 5%, $inv), 8 )
-
-
-	$text: terminal-color($hue, 10%, 80%, $inv)
-	$bright: terminal-color($hue, 10%, 95%, $inv)
-	$fade: terminal-color($hue, 10%, 40%, $inv)
-
-	$green: terminal-color(150, $sat, $li, $inv )
-	$blue: terminal-color(200, $sat, $li, $inv )
-	$red: terminal-color(340, $sat, $li, $inv )
-	$yellow: terminal-color(50, $sat, $li, $inv )
-	
-	+terminal-colors( $text ) 
-	+terminal-colors( $green, success selected added new created create add )
-	+terminal-colors( $blue, info ok placid )
-	+terminal-colors( $red, error unselected removed deleted remove delete )
-	+terminal-colors( $yellow, alert warning )
-	+terminal-colors( $bright, strong highlight bright )
-	+terminal-colors( $fade, fade disabled unimportant ) 
-
-	+terminal-colors( $text, plain text ) 
-
 	body
 
 		$sidebar: 200px
