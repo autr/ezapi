@@ -1,7 +1,20 @@
 [
     {
         "username": "guest",
-        "allows": "get",
-        "disallows": "post,delete,push"
+        "allows": {
+        	"get": "/*",
+        	"post": "/login",
+        	"put": null,
+        	"delete": null
+        }
+    },
+    {
+        "username": "pi",
+        "allows": {
+        	"get": "/*",
+        	"post": "/*",
+        	"put": "/*",
+        	"delete": null
+        }
     }
 ]

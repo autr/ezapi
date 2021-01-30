@@ -9,29 +9,33 @@ const { match, parse, exec } = require('matchit')
 const validate = require('jsonschema').validate
 
 
-const getPermittedArray = ( listStr ) => {
+// const getPermittedArray = ( listStr ) => {
 
-    if (!listStr) return []
-    const types = ['*', 'get', 'post', 'delete', 'put' ]
-    let arr = []
-    listStr.split(',').forEach( str => {
-        if ( types.indexOf(str) != -1 ) {
-            arr = arr.concat( 
-                api.list
-                    .filter( item => (item.type == str || str == '*') && types.indexOf( item.type ) != -1 )
-                    .map( item => `/${item.type}${item.url}` )
-            )
-        } else {
-            arr.push( str )
-        }
-    })
-    return arr
-}
+//     if (!listStr) return []
+//     const types = ['*']
+//     let arr = []
+//     const list = listStr.split(',')
+
+
+//     .forEach( str => {
+//         if ( types.indexOf(str) != -1 ) {
+//             arr = arr.concat( 
+//                 api.list
+//                     .filter( item => (item.type == str || str == '*') && types.indexOf( item.type ) != -1 )
+//                     .map( item => `/${item.type}${item.url}` )
+//             )
+//         } else {
+//             arr.push( str )
+//         }
+//     })
+//     return arr
+// }
 
 const isAllowed = async (req, res, item) => {
 
     let user = req.user
     let isAuth = req.isAuthenticated()
+
 
     if (!req.isAuthenticated()) {
         const users = JSON.parse( await ( await fs.readFileSync( path.resolve(__dirname, './bin/users.json') ) ).toString() )
@@ -39,22 +43,18 @@ const isAllowed = async (req, res, item) => {
         req.user = user
         if (user) isAuth = true
     }
+    console.log(`[api] 👤  using user "${req.user.username}"`)
     if ( user && isAuth ) {
 
         const disallows = user.disallows || ''
         const types = ['*', 'get', 'post', 'delete', 'put' ]
 
-
-        const yes = getPermittedArray( user.allows )
-        const no = getPermittedArray( user.disallows )
-        const filtered = yes.filter( item => no.indexOf(item) == -1 )
-        const allowed = filtered.map( parse )
-
-        const find = `/${req.method.toLowerCase()}${req.path}`
-        const found = match(find, allowed)
+        const method = req.method.toLowerCase()
+        const list = user.allows[ method ].split(',').map( u => u.trim() ).map( parse )
+        const found = match(req.path, list)
 
         if (found.length > 0) {
-            const params = exec(find, found)
+            const params = exec(req.path, found)
             return params
         }
     }

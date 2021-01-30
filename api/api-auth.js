@@ -6,7 +6,7 @@ const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const fs = require('fs')
 const path = require('path')
-const { pamAuthenticate } = require('node-linux-pam')
+const { pamAuthenticate, pamErrors } = require('node-linux-pam')
 
 passport.use('login', new LocalStrategy( async (username, password, done) => {
 
@@ -16,33 +16,29 @@ passport.use('login', new LocalStrategy( async (username, password, done) => {
 		const u = users.find( o => o.username == username )
 		if (!u)  {
 			const m = `no user with name "${username}" found`
-			console.log('[api-auth] 🛑  error logging in:', m)
+			console.log('[api-auth] 🛑  (A) error logging in:', m)
 			return done(null, false, { message: m } )
 		}
-		if (u.password != password)  {
-			const m = `incorrect password for "${username}"`
-			console.log('[api-auth] 🛑  error logging in:', m)
-			return done(null, false, { message: m } )
-		}
-
 
 		const res = await (new Promise( (resolve, reject) => {
+			console.log(`[api-auth] ⚡️  authenticatiing "${username}" with pam...`)
 			pamAuthenticate( { username, password }, function(err, code) {
-				if (!err) return reject({err,code})
-				return resolve({err,code})
+				const message = Object.keys( pamErrors ).find(key => pamErrors[key] == code)
+				if ( err ) reject({ message, code }) 
+				else resolve({ message, code })
 			})
 		}))
 
-		if ( res.err ) {
-			console.log('[api-auth] 🛑  error logging in:', res)
-			return done(null, false, err )
+		if ( res.code != 0 ) {
+			console.log('[api-auth] 🛑  (C) error logging in:', res.message)
+			return done(null, false, res.message )
 		}
 		
 		console.log('[api-auth] ✅  success logging in:', username)
 		return done(null, u)
 	} catch(err) {
-		console.log('[api-auth] ❌  error logging in:', err.message)
-		return done( JSON.stringify({ error: err.message }, null, 2) )
+		console.log('[api-auth] ❌  (D) error logging in:', err.message)
+		return done( null, false, err.message )
 	}
 
 }))
@@ -93,9 +89,9 @@ module.exports = [
 		emoji: '🔑',
 		next: async (req, res, data) => res.send(`
 				<form action="/login" method="POST">
-					<p><input name="username"></p>
-					<p><input name="password"></p>
-					<p><input type="submit" value="Login"></p>
+					<p><input name="username" type="text" /></p>
+					<p><input name="password" type ="password" /></p>
+					<p><input type="submit" value="Login" /></p>
 					<p style="color: hsl(0, 90%, 70%)">${req.flash('error')}</p>
 				</form> ` )
 	},

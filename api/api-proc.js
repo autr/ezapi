@@ -9,20 +9,6 @@ const { API_ERR, API_TRY, API_SUCCESS, API_OPEN, API_STDOUT, API_STDERR, API_CLO
 
 let spawned = {}
 
-
-const WHOAMI = spawn( 'sudo', [ 'id' ], {})
-
-function yoyoyo(data) {
-
-	console.log(`\n-----------------------\n${data}\n-----------------------\n`)
-}
-
-WHOAMI.stdout.on('data', yoyoyo);
-
-WHOAMI.stderr.on('error', yoyoyo);
-
-WHOAMI.on('close', yoyoyo);
-
 module.exports = [
 
 

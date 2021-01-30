@@ -33,9 +33,9 @@ module.exports = [
 	{
 		type: 'use',
 		next: session({ 
-			secret: 'some-secret',
+			secret: require('crypto').randomBytes(64).toString('hex'),
 			saveUninitialized: false,
-			resave: true
+			resave: false
 		}),
 		description: 'authentication secret',
 		category: types.CAT_CONF
