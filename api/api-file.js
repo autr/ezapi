@@ -23,9 +23,9 @@ module.exports = [
 		category: types.CAT_FILE,
 		schema: {
 			args: {
-				type: 'array',
+				type: 'string',
 				required: true,
-				desc: 'comma-separated list of arguments (ie. -l -R /home/user)'
+				desc: 'comma-separated list of ls arguments (ie. -l -R /home/user)'
 			}
 		},
 		data: async params => {
@@ -54,14 +54,14 @@ module.exports = [
 		category: types.CAT_FILE,
 		schema: {
 			paths: {
-				type: 'array',
+				type: 'string',
 				required: true,
-				desc: 'comma-separated list of dirs'
+				desc: 'comma-separated list of directories'
 			},
 			iname: {
-				type: 'array',
+				type: 'string',
 				required: true,
-				desc: 'comma-separated list of searches'
+				desc: 'comma-separated list of search queries of name'
 			}
 		},
 		data: async params => {
@@ -78,14 +78,27 @@ module.exports = [
 	{
 		url: '/cat',
 		type: 'get',
-		description: 'view files or folders',
+		description: 'read file to string',
 		category: types.CAT_FILE,
 		path: {
 			type: 'string',
 			required: true,
-			desc: 'path to files'
+			desc: 'path to file'
 		},
 		data: async params => await fs.readFileSync( params.path, 'utf8' )
+	},
+	{
+		url: '/sendfile',
+		type: 'get',
+		description: 'receive file',
+		category: types.CAT_FILE,
+		path: {
+			type: 'string',
+			required: true,
+			desc: 'path to file'
+		},
+		data: async params => params.path,
+		next: async (req, res, data) => res.sendFile( data )
 	}
 
 ]

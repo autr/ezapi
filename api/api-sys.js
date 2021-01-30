@@ -29,6 +29,17 @@ module.exports = [
 			return data
 		}
 	},
+	{
+		url: '/uptime',
+		type: 'get',
+		description: 'show uptime info',
+		category: types.CAT_SYS,
+		schema: {},
+		data: async params => {
+
+			return JSON.parse( await (await execSync( 'uptime | jc --uptime')).toString() )
+		}
+	},
 
 	{
 		url: '/xrandr',

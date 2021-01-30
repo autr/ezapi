@@ -186,7 +186,6 @@ module.exports = [
 
             }, bbc)
 
-            console.log(data)
             return data
 
 

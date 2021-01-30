@@ -1,9 +1,10 @@
+
+const isLinux = process.platform != 'darwin' && process.platform != 'win32'
 const types = require('../types.js')
 const util = require('../util.js')
 const os = require('os')
-const { snapshot } = (os.type() == 'Darwin') ? {} : require("process-list")
 const open = require('open')
-const { spawn, execSync } = require('child_process')
+const { spawn, execSync, spawnSync } = require('child_process')
 const { wss, inform } = require('../websockets.js')
 const { API_ERR, API_TRY, API_SUCCESS, API_OPEN, API_STDOUT, API_STDERR, API_CLOSE } = require('../types.js')
 
@@ -21,21 +22,30 @@ module.exports = [
 		description: 'all active processes and pids',
 		category: types.CAT_PROC,
 		schema: {},
-		data: async params => await snapshot(
-			'pid', 
-			'ppid', 
-			'name', 
-			'path', 
-			'threads', 
-			'owner', 
-			'priority', 
-			'cmdline', 
-			'starttime', 
-			'vmem', 
-			'pmem', 
-			'cpu', 
-			'utime', 
-			'stime')
+		data: async params => {
+
+			if ( process.platform == 'darwin' ) {
+
+				const ps = await (await execSync( 'ps -ef | jc --ps')).toString()
+				return JSON.parse(ps)
+			}
+
+			return await require("process-list").snapshot(
+				'pid', 
+				'ppid', 
+				'name', 
+				'path', 
+				'threads', 
+				'owner', 
+				'priority', 
+				'cmdline', 
+				'starttime', 
+				'vmem', 
+				'pmem', 
+				'cpu', 
+				'utime', 
+				'stime')
+		}
 	},
 
 	{

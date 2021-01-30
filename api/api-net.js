@@ -1,5 +1,6 @@
 const types = require('../types.js')
 const util = require('../util.js')
+const { spawn, execSync, spawnSync } = require('child_process')
 const { ifconfig, iwconfig, iwlist, wpa, wpa_supplicant } = require("../modules/wireless-tools")
 const pi_wifi = require("../modules/pi-wifi.js")
 
@@ -136,6 +137,17 @@ module.exports = [
 				if (err) return reject(err)
 				resolve(data)
 			}))
+		}
+	},
+	{
+		url: '/netstat',
+		type: 'get',
+		description: 'show list of TCP connections',
+		category: types.CAT_NET,
+		schema: {},
+		data: async params => {
+
+			return JSON.parse( await (await execSync( 'netstat | jc --netstat')).toString() )
 		}
 	}
 

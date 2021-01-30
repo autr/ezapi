@@ -6,7 +6,13 @@ const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const fs = require('fs')
 const path = require('path')
-const { pamAuthenticate, pamErrors } = require('node-linux-pam')
+
+const isLinux = process.platform != 'darwin' && process.platform != 'win32'
+let pamAuthenticate, pamErrors
+if ( isLinux ) {
+	pamAuthenticate = require('node-linux-pam').pamAuthenticate
+	pamErrors = require('node-linux-pam').pamErrors
+}
 
 passport.use('login', new LocalStrategy( async (username, password, done) => {
 
@@ -20,14 +26,17 @@ passport.use('login', new LocalStrategy( async (username, password, done) => {
 			return done(null, false, { message: m } )
 		}
 
-		const res = await (new Promise( (resolve, reject) => {
-			console.log(`[api-auth] ⚡️  authenticatiing "${username}" with pam...`)
-			pamAuthenticate( { username, password }, function(err, code) {
-				const message = Object.keys( pamErrors ).find(key => pamErrors[key] == code)
-				if ( err ) reject({ message, code }) 
-				else resolve({ message, code })
-			})
-		}))
+		let res = { code: 999, message: 'not running linux (no pam)' }
+		if ( isLinux ) {
+			res = await (new Promise( (resolve, reject) => {
+				console.log(`[api-auth] ⚡️  authenticatiing "${username}" with pam...`)
+				pamAuthenticate( { username, password }, function(err, code) {
+					const message = Object.keys( pamErrors ).find(key => pamErrors[key] == code)
+					if ( err ) reject({ message, code }) 
+					else resolve({ message, code })
+				})
+			}))
+		}
 
 		if ( res.code != 0 ) {
 			console.log('[api-auth] 🛑  (C) error logging in:', res.message)
