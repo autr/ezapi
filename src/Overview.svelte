@@ -91,7 +91,7 @@
 			<div class="ptb1 overflow-auto bb1-solid">
 
 				<div class="flex plr2 ptb0-4 align-items-flex-end justify-content-between">
-					<div class="f4">API</div>
+					<div class="f3">API</div>
 					<button 
 						class:filled={permissions}
 						on:click={e => permissions = !permissions}>
@@ -99,7 +99,7 @@
 					</button>
 				</div>
 				{#each endpoints as ee, i}
-					<div class="plr2 ptb0-4"><span class="f4">{categories[i]}</span></div>
+					<div class="plr2 ptb0-4"><span class="f3">{categories[i]}</span></div>
 					{#each ee as e, ii}
 						{#if e.type == 'get' || e.type == 'post' || e.type == 'ws' }
 							<div 
@@ -107,7 +107,13 @@
 								class:pop={ _current == e.type + e.url + e.description }
 								class="flex justify-content-between plr2 ptb0-4 pointer align-items-center">
 								<div class="flex align-items-center">
-									<div class="f1 w40px inline-block">{e.type.toUpperCase()}</div> 
+									<div 
+										class:error={e.type == 'delete'}
+										class:success={e.type == 'post'}
+										class:info={e.type == 'get'}
+										class="f1 w40px inline-block">
+										{e.type.toUpperCase()}
+									</div> 
 									{#if e.type =='get'}
 										<a
 											href={e.url}
@@ -133,7 +139,7 @@
 
 
 			<div class="ptb1 basis-auto bb1-solid" style="flex-basis: auto">
-				<div class="plr2 ptb0-4"><span class="f4">Endpoint</span></div>
+				<div class="plr2 ptb0-4"><span class="f3">Endpoint</span></div>
 				<div class="p2">
 					{#if current}
 						<form bind:this={formEl}>
@@ -180,7 +186,7 @@
 			</div>
 
 			<div class="ptb1 grow overflow-auto">
-				<div class="plr2 ptb0-4"><span class="f4">Response</span></div>
+				<div class="plr2 ptb0-4"><span class="f3">Response</span></div>
 				<div class="p2" style="font-family:monospace;white-space:pre-wrap">{@html (waiting) ? 'waiting' : responseStr || '~' }</div>
 			</div>
 

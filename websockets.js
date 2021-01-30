@@ -4,8 +4,8 @@ const types = require('./types.js')
 
 const wss = new WebSocket.Server({ port: 9876 })
 
-const inform = ( pid, type, message ) => {
-	console.log(`[api.js] ${type}  🌐  ${pid}: "${message}"`)
+const inform = ( pid, type, message, extra ) => {
+	console.log(`[api.js] ${type}  🌐  ${pid}: "${message}"`, extra || '')
 	wss.clients.forEach(function each(client) {
 	  if (client.readyState === WebSocket.OPEN) {
 	    client.send( JSON.stringify( { pid, type, message } ) )
