@@ -6,6 +6,7 @@ const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const fs = require('fs')
 const path = require('path')
+const { spawn, execSync } = require('child_process')
 
 const isLinux = process.platform != 'darwin' && process.platform != 'win32'
 let pamAuthenticate, pamErrors
@@ -118,12 +119,22 @@ module.exports = [
 		})
 	},
 	{
+		url: '/usernames',
+		type: 'get',
+		description: 'list usernames',
+		category: types.CAT_AUTH,
+		schema: {},
+		data: async (req,res,data) => (await (await execSync(`awk -F ":" '/home/ {print $1}' /etc/passwd | sort`).toString()).split('\n').filter( n => n != '').map( n => n.trim()))
+
+	},
+	{
 		url: '/status',
 		type: 'get',
 		description: 'authorisation status',
 		category: types.CAT_AUTH,
 		schema: {},
 		emoji: '🔒',
-		data: e => null
+		data: params => null,
+		next: async (req,res,data) => res.send({ username: req.user?.username, authenticated: req.isAuthenticated() })
 	}
 ]

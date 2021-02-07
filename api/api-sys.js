@@ -48,14 +48,7 @@ module.exports = [
 		category: types.CAT_SYS,
 		schema: {},
 		returns: 'json',
-		data: async params => {
-			try {
-				const data = await xrandr.parser( await execSync('DISPLAY=:0 xrandr') )
-				res.send( data )
-			} catch(err) {
-				res.status( 500 ).send( { message: err.message } )
-			}
-		}
+		data: async params => await xrandr.parser( await execSync('DISPLAY=:0 xrandr') )
 
 	},
 

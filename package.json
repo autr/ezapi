@@ -38,6 +38,7 @@
     "shelljs": "^0.8.4",
     "svelte-preprocess": "^4.6.1",
     "systeminformation": "^4.34.5",
+    "ua-parser-js": "^0.7.23",
     "uuid-cli": "^2.0.0",
     "websocket": "^1.0.33",
     "wifi-control": "^2.0.1",
@@ -45,7 +46,7 @@
     "xpm2png": "^1.0.0",
     "xrandr": "^1.1.3"
   },
-  "optionalDependencies":{
+  "optionalDependencies": {
     "node-linux-pam": "^0.0.1"
   },
   "devDependencies": {
