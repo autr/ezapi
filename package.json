@@ -40,6 +40,7 @@
     "similarity": "^1.2.1",
     "svelte-preprocess": "^4.6.1",
     "systeminformation": "^4.34.5",
+    "ua-parser-js": "^0.7.24",
     "uuid-cli": "^2.0.0",
     "websocket": "^1.0.33",
     "wifi-control": "^2.0.1",

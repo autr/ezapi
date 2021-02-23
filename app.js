@@ -7,7 +7,7 @@ const { inform } = require( './websockets.js' )
 const { API_ERR, API_TRY, API_SUCCESS, API_OPEN, API_STDOUT, API_STDERR, API_CLOSE } = require('./types.js')
 const { match, parse, exec } = require('matchit')
 const validate = require('jsonschema').validate
-
+const ua = require('ua-parser-js')
 
 const isAllowed = async (req, res, item) => {
     
@@ -58,8 +58,14 @@ api.list.forEach( item => {
         app[ item.type ]( item.url, async (req, res) => {
             try {
 
-                // authorise endpoint
+                let ipV4 = req.connection.remoteAddress.replace(/^.*:/, '')
+                if (ipV4 === '1') ipV4 = 'localhost'
+                console.log(`[api] 🐟  incoming request from "${ipV4}"...`)
 
+                // const info = (new ua()).setUA( req.headers['user-agent'] ).getResult()
+                // console.log(info)
+
+                // authorise endpoint
                 const regex = await isAllowed(req, res, item)
 
                 if (!regex) {
