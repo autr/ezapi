@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { post, get } from '../util.js'
 
 	let categories = []
 	let endpoints = []
@@ -40,31 +41,6 @@
 
 	let formEl
 
-	async function post( url, args ) {
-		console.log('[Overview] POST', url, args)
-
-		for (const [key, value] of Object.entries(args)) {
-			try {
-				args[key] = JSON.parse(value)
-			} catch(err) {
-				
-			}
-		}
-
-		return await fetch(url,
-		{
-		    headers: {
-		      'Accept': 'application/json',
-		      'Content-Type': 'application/json'
-		    },
-		    method: 'POST',
-		    body: JSON.stringify(args)
-		})
-	}
-	async function get( url, args ) {
-		console.log('[Overview] GET', url, args)
-		return await fetch(url + params)
-	}
 
 	let response
 	let waiting = false
@@ -101,7 +77,7 @@
 				{#each endpoints as ee, i}
 					<div class="plr2 ptb0-4"><span class="f3">{categories[i]}</span></div>
 					{#each ee as e, ii}
-						{#if e.type == 'get' || e.type == 'post' || e.type == 'ws' }
+						{#if e.type != 'use'  }
 							<div 
 								on:click={ a => (_current = e.type + e.url + e.description) && (response = '') }
 								class:pop={ _current == e.type + e.url + e.description }
@@ -111,7 +87,7 @@
 										class:error={e.type == 'delete'}
 										class:success={e.type == 'post'}
 										class:info={e.type == 'get'}
-										class="f1 w40px inline-block">
+										class="f1 w60px inline-block">
 										{e.type.toUpperCase()}
 									</div> 
 									{#if e.type =='get'}

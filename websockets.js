@@ -5,10 +5,11 @@ const types = require('./types.js')
 const wss = new WebSocket.Server({ port: 9876 })
 
 const inform = ( pid, type, message, extra ) => {
-	console.log(`[api.js] ${type}  🌐  ${pid}: "${message}"`, extra || '')
+	const msg = typeof( message ) == 'object' || typeof( message ) == 'array' ? JSON.stringify( message ) : message
+	console.log(`[inform] ${type}  🌐  ${pid}: "${msg}"`, extra || '')
 	wss.clients.forEach(function each(client) {
 	  if (client.readyState === WebSocket.OPEN) {
-	    client.send( JSON.stringify( { pid, type, message } ) )
+	    client.send( JSON.stringify( { pid, type, msg } ) )
 	  }
 	})
 }
@@ -17,7 +18,7 @@ let spawned = []
 wss.on('connection', function connection(ws) {
 
 	const addr = ws._socket.address()
-	console.log(`[api.js] 🌐 ✅  connection made: ${addr.address} ${addr.port}"`)
+	console.log(`[websockets] 🌐 ✅  connection made: ${addr.address} ${addr.port}"`)
 
 	ws.on('message', function incoming(message) {
 		console.log('received: %s', message)

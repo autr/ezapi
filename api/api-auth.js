@@ -6,8 +6,10 @@ const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const fs = require('fs')
 const path = require('path')
+const { spawn, execSync, spawnSync } = require('child_process')
 
 const isLinux = process.platform != 'darwin' && process.platform != 'win32'
+const isMac = process.platform == 'darwin'
 let pamAuthenticate, pamErrors
 if ( isLinux ) {
 	pamAuthenticate = require('node-linux-pam').pamAuthenticate
@@ -16,37 +18,46 @@ if ( isLinux ) {
 
 passport.use('login', new LocalStrategy( async (username, password, done) => {
 
-	console.log('[api-auth] ⚡️  logging in with pam:', username)
+	console.log('[api-auth] ⚡️  logging in with system auth:', username)
 	try {
 		const users = JSON.parse( await (await fs.readFileSync( path.resolve(__dirname, '../bin/users.json'))).toString() )
 		const u = users.find( o => o.username == username )
 		if (!u)  {
 			const m = `no user with name "${username}" found`
-			console.log('[api-auth] 🛑  (A) error logging in:', m)
+			console.log('[api-auth] 👥 🛑  (A) error logging in:', m)
 			return done(null, false, { message: m } )
 		}
 
-		let res = { code: 999, message: 'not running linux (no pam)' }
+		let res = { code: 999, message: `not running pam (linux) or dscl (osx)` }
 		if ( isLinux ) {
 			res = await (new Promise( (resolve, reject) => {
-				console.log(`[api-auth] ⚡️  authenticatiing "${username}" with pam...`)
+				console.log(`[api-auth] 👥 ⚡️  authenticatiing "${username}" with pam...`)
 				pamAuthenticate( { username, password }, function(err, code) {
 					const message = Object.keys( pamErrors ).find(key => pamErrors[key] == code)
 					if ( err ) reject({ message, code }) 
 					else resolve({ message, code })
 				})
 			}))
+
+		} else if (isMac) {
+
+			try {
+				res = { code: 0, message: await execSync( `dscl . -authonly ${username} "${password}"`  ) }
+			} catch(err) {
+				res = { code: 403, message: 'incorrect credentials' }
+			}
+
 		}
 
 		if ( res.code != 0 ) {
-			console.log('[api-auth] 🛑  (C) error logging in:', res.message)
+			console.log('[api-auth] 👥 🛑  (C) error logging in:', res.message)
 			return done(null, false, res.message )
 		}
 		
-		console.log('[api-auth] ✅  success logging in:', username)
+		console.log('[api-auth] 👥 ✅  success logging in:', username)
 		return done(null, u)
 	} catch(err) {
-		console.log('[api-auth] ❌  (D) error logging in:', err.message)
+		console.log('[api-auth] 👥 ❌  (D) error logging in:', err.message)
 		return done( null, false, err.message )
 	}
 
@@ -64,7 +75,7 @@ passport.deserializeUser( async (username, done) => {
 
 		const users = JSON.parse( await ( await fs.readFileSync( path.resolve(__dirname, '../bin/users.json') ) ).toString() )
 		const u = users.find( uu => uu.username == username )
-		console.log('[api-auth] ✅  deserialized:', username)
+		// console.log('[api-auth] ✅  deserialized:', username)
 		done(null, u)
 	} catch( err ) {
 		console.log('[api-auth] ❌  could not be deserialized:', err.message)
@@ -85,24 +96,9 @@ module.exports = [
 		schema: {},
 		emoji: '🔑',
 		next: async (req, res, data) => {
-			req.logout()
-			res.redirect('/')
+			await req.logout()
+			res.send( `logged out` )
 		}
-	},
-	{
-		url: '/login',
-		type: 'get',
-		description: 'basic HTML login',
-		category: types.CAT_AUTH,
-		schema: {},
-		emoji: '🔑',
-		next: async (req, res, data) => res.send(`
-				<form action="/login" method="POST">
-					<p><input name="username" type="text" /></p>
-					<p><input name="password" type ="password" /></p>
-					<p><input type="submit" value="Login" /></p>
-					<p style="color: hsl(0, 90%, 70%)">${req.flash('error')}</p>
-				</form> ` )
 	},
 	{
 		url: '/login',
@@ -111,19 +107,55 @@ module.exports = [
 		category: types.CAT_AUTH,
 		schema: {},
 		emoji: '🔑',
-		next: passport.authenticate('login', {
-			successRedirect: '/',
-			failureRedirect: '/login',
-			failureFlash: true
-		})
+		next: (req,res,next) => { 
+			console.log('....')
+			passport.authenticate('login', function( err, user, info ) {
+				if (!user || err) return res.status(404).send( info )
+				req.logIn( user, function(error) {
+					if (error) return res.status( 500 ).send( error )
+					return res.send( user )
+				})
+			})( req, res, next)
+		}
 	},
+	// {
+	// 	url: '/usernames',
+	// 	type: 'get',
+	// 	description: 'list usernames',
+	// 	category: types.CAT_AUTH,
+	// 	schema: {},
+	// 	data: async (req,res,data) => (await (await execSync(`awk -F ":" '/home/ {print $1}' /etc/passwd | sort`).toString()).split('\n').map( n => n.trim() ).filter( n => n != '' ))
+
+	// },
 	{
-		url: '/status',
+		url: '/whoami',
 		type: 'get',
-		description: 'authorisation status',
+		description: 'view current user',
 		category: types.CAT_AUTH,
 		schema: {},
 		emoji: '🔒',
-		data: e => null
+		data: async e => null,
+		next: async (req, res, data) => {
+
+			res.send( req.user )
+		}
+	},
+	{
+		url: '/check_auth',
+		type: 'get',
+		description: 'check permissions for endpoint',
+		category: types.CAT_AUTH,
+		schema: {
+			path: {
+				type: 'string',
+				required: true
+			}
+		},
+		emoji: '🔒',
+		data: async e => null,
+		next: async (req, res, data) => {
+
+			res.send( req.user )
+		}
 	}
 ]

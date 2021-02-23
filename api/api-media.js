@@ -47,8 +47,8 @@ module.exports = [
 		data: async params => {
 			const s = params.iname
 			const cmd = `find /usr/share/icons /usr/share/pixmaps -iname '*${s}*.xpm' -o -iname '*${s}*.png' -o -iname '*${s}*.svg'`
-			const data = await execSync( cmd )
-			return data.toString().split('\n').filter( e => e != '' )
+			const data = ( await execSync( cmd ) ).toString().split('\n').filter( e => e != '' )
+			return data
 		}
 	}
 ]

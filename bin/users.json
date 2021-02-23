@@ -11,10 +11,19 @@
     {
         "username": "pi",
         "allows": {
-        	"get": "/*",
-        	"post": "/*",
-        	"put": "/*",
-        	"delete": null
+            "get": "/*",
+            "post": "/*",
+            "put": "/*",
+            "delete": null
+        }
+    },
+    {
+        "username": "gilbert",
+        "allows": {
+            "get": "/*",
+            "post": "/*",
+            "put": "/*",
+            "delete": "/*"
         }
     }
 ]

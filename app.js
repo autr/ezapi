@@ -9,33 +9,10 @@ const { match, parse, exec } = require('matchit')
 const validate = require('jsonschema').validate
 
 
-// const getPermittedArray = ( listStr ) => {
-
-//     if (!listStr) return []
-//     const types = ['*']
-//     let arr = []
-//     const list = listStr.split(',')
-
-
-//     .forEach( str => {
-//         if ( types.indexOf(str) != -1 ) {
-//             arr = arr.concat( 
-//                 api.list
-//                     .filter( item => (item.type == str || str == '*') && types.indexOf( item.type ) != -1 )
-//                     .map( item => `/${item.type}${item.url}` )
-//             )
-//         } else {
-//             arr.push( str )
-//         }
-//     })
-//     return arr
-// }
-
 const isAllowed = async (req, res, item) => {
-
+    
     let user = req.user
     let isAuth = req.isAuthenticated()
-
 
     if (!req.isAuthenticated()) {
         const users = JSON.parse( await ( await fs.readFileSync( path.resolve(__dirname, './bin/users.json') ) ).toString() )
@@ -43,22 +20,31 @@ const isAllowed = async (req, res, item) => {
         req.user = user
         if (user) isAuth = true
     }
-    console.log(`[api] 👤  using user "${req.user.username}"`)
+    const c = '\x1b[93m'
+    const e = '\033[0m'
+    console.log(`${c}[api] 👤  ${req.method} ${req.path} -> ${req.user.username} ${e}`)
     if ( user && isAuth ) {
 
-        const disallows = user.disallows || ''
-        const types = ['*', 'get', 'post', 'delete', 'put' ]
-
         const method = req.method.toLowerCase()
-        const list = user.allows[ method ].split(',').map( u => u.trim() ).map( parse )
-        const found = match(req.path, list)
 
-        if (found.length > 0) {
-            const params = exec(req.path, found)
+        const whitelist = !user.allows[ method ] ? [] : user.allows[ method ].split(',').map( u => u.trim() ).map( parse )
+        const apilist = api.list.filter( a => a.type.toLowerCase() == method ).map( a => a.url ).map(parse)
+
+        const foundA = match(req.path, whitelist)
+        const foundB = match(req.path, apilist)
+        if (foundA.length > 0 && foundB.length > 0) {
+
+            // now we must match against the real endpoints (not shorthand)...
+            
+            const params = exec(req.path, foundB)
             return params
         }
     }
     return false 
+}
+
+function sendError( res, code, message, extra ) {
+    res.status( code ).send( { message, code, status: code, error: true, ...extra } )
 }
 
 
@@ -77,9 +63,8 @@ api.list.forEach( item => {
                 const regex = await isAllowed(req, res, item)
 
                 if (!regex) {
-                    console.log(`[api] 🛑  "${req?.user?.username}" not authorised: allows="${req?.user?.allows || '~'}" disallows="${req?.user?.disallows || '~'}" -> ${item.type} ${item.url}` )
-                    res.status(401).send( { error: 'not authorised' } )
-                    return
+                    console.log(`[api] 🛑  "${req?.user?.username}" not authorised: allows="${req?.user?.allows || '~'}" -> ${item.type} ${item.url}` )
+                    return sendError( res, 401, 'not authorised')
                 }
 
                 const user = {}
@@ -95,28 +80,36 @@ api.list.forEach( item => {
                 const result = validate( args, schema, {required: true} )
 
                 if (!result.valid) {
-                    const errs = result.errors.map( e => e.stack.trim() ).join(', ')
-                    console.log(`[api] 🛑  invalid schema "${errs}" -> ${item.type} ${item.url}` )
-                    console.log('[api] ->', args, schema )
-                    res.status(422).send( { error: errs } )
-                    return
+                    const errs = result.errors.map( e => e.stack.trim() ).join(', ').replaceAll('instance.', '')
+                    console.log(`[api] 🛑  ${req.method} ${req.path} invalid schema "${errs}" -> ${item.type} ${item.url}`, args )
+                    console.log( '--------------\n', args, '--------------\n')
+                    console.log( '--------------\n', schema, '--------------\n')
+                    return sendError( res, 422, errs, { args } )
                 }
-
-
 
                 // process data
 
-                const data = (item.data) ? await item.data( { ...args, regex }, user ) : null
+                const data = (item.data) ? await item.data( { ...args, regex }, user ) : {}
 
                 // perform res and req
 
+                const colors = {
+                    get: '\x1b[92m',
+                    post: '\x1b[96m',
+                    delete: '\x1b[95m'
+                }
+                const c = colors[req.method.toLowerCase()]
+                const e = '\033[0m'
+                console.log(`${c}[api] ✅  ${req.method} ${req.path} -> success! ${e}`)
                 const send = item.next || ( (req, res, data) => res.send( data ) )
                 return send( req, res, data )
                 
             } catch(err) {
-                inform( process.pid, API_ERR, err.message || err, err )
-                console.error( err )
-                res.status(500).send( { error: err.message || err } )
+
+                console.log(`[api] 🚨  ${req.method} ${req.path} caught error `, err.message || err, err.stack || err )
+                inform( req.path, API_ERR, err.message || err )
+                return sendError( res, err.code || 500, err.message || err )
+                
             }
         })
 	}
