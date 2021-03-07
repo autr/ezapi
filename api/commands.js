@@ -3,7 +3,7 @@ const self = {
     params: {
       display: ':0'
     },
-    run o => `
+    run: o => `
       ids=$(DISPLAY=${o.display} xinput --list | awk -v search="$1" \
           '$0 ~ search {match($0, /id=[0-9]+/);\
                         if (RSTART) \
@@ -20,7 +20,7 @@ const self = {
   pkill: {
     params: {
       name: ''
-    }
+    },
     run: o => `pkill -9 ${o.name}`
   },
   kiosk: {

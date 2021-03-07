@@ -118,15 +118,6 @@ module.exports = [
 			})( req, res, next)
 		}
 	},
-	// {
-	// 	url: '/usernames',
-	// 	type: 'get',
-	// 	description: 'list usernames',
-	// 	category: types.CAT_AUTH,
-	// 	schema: {},
-	// 	data: async (req,res,data) => (await (await execSync(`awk -F ":" '/home/ {print $1}' /etc/passwd | sort`).toString()).split('\n').map( n => n.trim() ).filter( n => n != '' ))
-
-	// },
 	{
 		url: '/whoami',
 		type: 'get',
