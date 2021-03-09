@@ -12,7 +12,7 @@ module.exports = {
 
 	// categories
 
-	CAT_CONF: 'configuration',
+	CAT_CORE: 'core',
 	CAT_FILE: 'filesystem',
 	CAT_AUTH: 'authentication',
 	CAT_SYS: 'system',

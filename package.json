@@ -1,5 +1,5 @@
 {
-  "name": "pilayer",
+  "name": "ezapi",
   "version": "1.0.0",
   "main": "app.js",
   "author": "G.Sinnott",
@@ -8,6 +8,18 @@
   "engines": {
     "node": "15.x"
   },
+  "description": "ez, innit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/autr/piapi.git"
+  },
+  "keywords": [
+    "api",
+    "piapi",
+    "raspberrypi",
+    "rest",
+    "crud"
+  ],
   "dependencies": {
     "@rollup/plugin-alias": "^3.1.2",
     "body-parser": "^1.19.0",
@@ -46,7 +58,9 @@
     "wifi-control": "^2.0.1",
     "ws": "^7.4.1",
     "xpm2png": "^1.0.0",
-    "xrandr": "^1.1.3"
+    "xrandr": "^1.1.3",
+    "node-linux-pam": "^0.0.1",
+    "process-list": "^2.0.0"
   },
   "optionalDependencies": {
     "node-linux-pam": "^0.0.1",
@@ -69,8 +83,12 @@
     "graceful-fs": "^4.2.4"
   },
   "scripts": {
-    "start": "nodemon app.js",
+    "start": "nodemon index.js",
     "build": "rollup -c",
     "dev": "rollup -c -w & node-sass src/global.sass assets/global.css -w"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/autr/piapi/issues"
+  },
+  "homepage": "https://github.com/autr/piapi#readme"
 }
