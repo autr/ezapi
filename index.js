@@ -429,15 +429,18 @@ module.exports = {
 			    }
 			]
 
-			const dest = path.resolve(__dirname, './bin/users.json')
+			const dir = './bin'
+			const dest = path.resolve( path.join( dir, 'users.json') )
+
 			try {
+				if (!fs.existsSync(dir))  fs.mkdirSync(dir)
 				const exists = await fs.existsSync( dest )
 				if (!exists) {
 					await fs.writeFileSync( dest, JSON.stringify( template ) )
-					console.log(`[api] ✅  success copying ${src} -> ${dest}` )
+					console.log(`[api] ✅  success creating -> ${dest}` )
 				}
 			} catch(err) {
-				console.log(`[api] ❌  error copying ${src} -> ${dest}: "${err.message}"` )
+				console.log(`[api] ❌  error creating -> ${dest}: "${err.message}"` )
 			}
 			const port = server.address().port
 			console.log(`[api] ✨  server running on port: ${port}`)

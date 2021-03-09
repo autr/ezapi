@@ -1,2 +1,2 @@
-const ezapi = require('./index.js')
-return ezapi.app( [], {nocache: true} )
+const eazapi = require('./index.js')
+return eazapi.app( [], {nocache: true} )
