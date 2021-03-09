@@ -4,11 +4,11 @@
   "main": "app.js",
   "author": "G.Sinnott",
   "license": "MIT",
-  "private": true,
+  "private": false,
   "engines": {
     "node": "15.x"
   },
-  "description": "ez, innit",
+  "description": "an autoconfiguring API",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/autr/piapi.git"
