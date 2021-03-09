@@ -7,7 +7,7 @@
 	let keyed = {}
 
 	onMount(async () => {
-		const res = await fetch(`/endpoints`)
+		const res = await fetch(`endpoints`)
 		const json = await res.json()
 		json.forEach( e => {
 			const k = e.category
