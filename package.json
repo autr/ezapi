@@ -1,5 +1,5 @@
 {
-  "name": "ezapi",
+  "name": "eazapi",
   "version": "1.0.0",
   "main": "app.js",
   "author": "G.Sinnott",
@@ -11,11 +11,11 @@
   "description": "an autoconfiguring API",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/autr/piapi.git"
+    "url": "git+https://github.com/autr/eazapi.git"
   },
   "keywords": [
     "api",
-    "piapi",
+    "eazapi",
     "raspberrypi",
     "rest",
     "crud"
@@ -89,7 +89,7 @@
     "dev": "rollup -c -w & node-sass src/global.sass assets/global.css -w"
   },
   "bugs": {
-    "url": "https://github.com/autr/piapi/issues"
+    "url": "https://github.com/autr/eazapi/issues"
   },
-  "homepage": "https://github.com/autr/piapi#readme"
+  "homepage": "https://github.com/autr/eazapi#readme"
 }
