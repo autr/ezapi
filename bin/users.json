@@ -3,9 +3,9 @@
         "username": "guest",
         "allows": {
         	"get": "/*",
-        	"post": "/login",
-        	"put": null,
-        	"delete": null
+        	"post": "/*",
+        	"put": "/*",
+        	"delete": "/*"
         }
     },
     {
