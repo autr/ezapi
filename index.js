@@ -226,7 +226,7 @@ module.exports = {
 						const regex = await isAllowed(req, res, item, endpoints, opts)
 
 						if (!regex) {
-							console.log(`[api] 🛑  "${req?.user?.username}" not authorised: allows="${JSON.stringify(req?.user?.allows) || '~'}" -> ${item.type} ${item.url}` )
+							console.log(`[api] 🛑  ${401} "${req?.user?.username}" not authorised: allows="${JSON.stringify(req?.user?.allows) || '~'}" -> ${item.type} ${item.url}` )
 							return sendError( res, 401, 'not authorised')
 						}
 
@@ -247,7 +247,7 @@ module.exports = {
 								return err.path[err.path.length-1] + ' ' + err.message
 							}).join('\n')
 
-							console.log(`[api] 🛑  ${req.method} ${req.path} invalid schema "${errs}" -> ${item.type} ${item.url}` )
+							console.log(`[api] 🛑  ${422} ${req.method} ${req.path} invalid schema "${errs}" -> ${item.type} ${item.url}` )
 							const extra = { args, schema, result } 
 							return sendError( res, 422, errs, extra)
 						}
@@ -271,9 +271,11 @@ module.exports = {
 						
 					} catch(err) {
 
-						console.log(`[api] 🚨  ${req.method} ${req.path} caught error `, err.message || err, err.stack || err )
+						let code = 500
+						if (err.code == 'ENOENT') code = 404
+						console.log(`[api] 🛑  ${code} ${req.method} ${req.path}`, err.message || err, err.stack || err )
 						// inform( req.path, types.API_ERR, err.message || err )
-						return sendError( res, err.code || 500, err.message || err )
+						return sendError( res, 500, err.message || err )
 						
 					}
 				})
