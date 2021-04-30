@@ -52,7 +52,7 @@ async function isAllowed (req, res, item, endpoints, opts) {
 
 	let user = req.user
 	let isAuth = req.isAuthenticated()
-	console.log(`${c}[api] 👤  ${usersPath()}${e} ---->`, user)
+	if (!opts.silent) console.log(`${c}[api] 👤  ${usersPath()}${e} ---->`, user)
 
 	if (!req.isAuthenticated()) {
 		const users = await readUsersFile( opts )
@@ -61,7 +61,7 @@ async function isAllowed (req, res, item, endpoints, opts) {
 		if (user) isAuth = true
 	}
 
-	console.log(`${c}[api] 👤  ${req.method} ${req.user.username} -> ${req.path} ${e}`)
+	if (!opts.silent) console.log(`${c}[api] 👤  ${req.method} ${req.user.username} -> ${req.path} ${e}`)
 	if ( user && isAuth ) {
 
 		const method = req.method.toLowerCase()
@@ -206,7 +206,7 @@ module.exports = {
 		endpoints.forEach( item => {
 
 			const emoji = item.type == 'use' ? '🔧' : item.type == 'get' ? '🍬' : '✉️'
-			console.log(`[api] ${emoji}  ${item.type.toUpperCase()}: ${item.url || '~'} ${ item.type == 'use' ? item.description : ''}`)
+			if (!opts.silent) console.log(`[api] ${emoji}  ${item.type.toUpperCase()}: ${item.url || '~'} ${ item.type == 'use' ? item.description : ''}`)
 			if (item.type == 'use') {
 				if (item.url)
 					app[ item.type ]( item.url, item.next )
@@ -218,7 +218,7 @@ module.exports = {
 
 						let ipV4 = req.connection.remoteAddress.replace(/^.*:/, '')
 						if (ipV4 === '1') ipV4 = 'localhost'
-						console.log(`[api] 🐟  incoming request from "${ipV4}"...`) 
+						if (!opts.silent) console.log(`[api] 🐟  incoming request from "${ipV4}"...`) 
 
 						// const info = (new ua()).setUA( req.headers['user-agent'] ).getResult()
 
@@ -254,7 +254,7 @@ module.exports = {
 
 						// process data
 
-						const data = (item.data) ? await item.data( { ...args, regex }, user ) : {}
+						const data = (item.data) ? await item.data( { ...args, regex }, { user, opts, req } ) : {}
 
 						// perform res and req
 
@@ -265,7 +265,7 @@ module.exports = {
 						}
 						const c = colors[req.method.toLowerCase()]
 						const e = '\033[0m'
-						console.log(`${c}[api] ✅  ${req.method} ${req.path} -> success! ${e}`)
+						if (!opts.silent) console.log(`${c}[api] ✅  ${req.method} ${req.path} -> success! ${e}`)
 						const send = item.next || ( (req, res, data) => res.send( data ) )
 						return send( req, res, data )
 						
