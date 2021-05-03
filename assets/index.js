@@ -1,5 +1,5 @@
 
-(function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(window.document);
+(function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35730/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(window.document);
 var app = (function () {
     'use strict';
 
@@ -28,14 +28,43 @@ var app = (function () {
         return Object.keys(obj).length === 0;
     }
 
+    // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
+    // at the end of hydration without touching the remaining nodes.
+    let is_hydrating = false;
+    const nodes_to_detach = new Set();
+    function start_hydrating() {
+        is_hydrating = true;
+    }
+    function end_hydrating() {
+        is_hydrating = false;
+        for (const node of nodes_to_detach) {
+            node.parentNode.removeChild(node);
+        }
+        nodes_to_detach.clear();
+    }
     function append(target, node) {
-        target.appendChild(node);
+        if (is_hydrating) {
+            nodes_to_detach.delete(node);
+        }
+        if (node.parentNode !== target) {
+            target.appendChild(node);
+        }
     }
     function insert(target, node, anchor) {
-        target.insertBefore(node, anchor || null);
+        if (is_hydrating) {
+            nodes_to_detach.delete(node);
+        }
+        if (node.parentNode !== target || (anchor && node.nextSibling !== anchor)) {
+            target.insertBefore(node, anchor || null);
+        }
     }
     function detach(node) {
-        node.parentNode.removeChild(node);
+        if (is_hydrating) {
+            nodes_to_detach.add(node);
+        }
+        else if (node.parentNode) {
+            node.parentNode.removeChild(node);
+        }
     }
     function destroy_each(iterations, detaching) {
         for (let i = 0; i < iterations.length; i += 1) {
@@ -172,22 +201,24 @@ var app = (function () {
         : typeof globalThis !== 'undefined'
             ? globalThis
             : global);
-    function mount_component(component, target, anchor) {
+    function mount_component(component, target, anchor, customElement) {
         const { fragment, on_mount, on_destroy, after_update } = component.$$;
         fragment && fragment.m(target, anchor);
-        // onMount happens before the initial afterUpdate
-        add_render_callback(() => {
-            const new_on_destroy = on_mount.map(run).filter(is_function);
-            if (on_destroy) {
-                on_destroy.push(...new_on_destroy);
-            }
-            else {
-                // Edge case - component was destroyed immediately,
-                // most likely as a result of a binding initialising
-                run_all(new_on_destroy);
-            }
-            component.$$.on_mount = [];
-        });
+        if (!customElement) {
+            // onMount happens before the initial afterUpdate
+            add_render_callback(() => {
+                const new_on_destroy = on_mount.map(run).filter(is_function);
+                if (on_destroy) {
+                    on_destroy.push(...new_on_destroy);
+                }
+                else {
+                    // Edge case - component was destroyed immediately,
+                    // most likely as a result of a binding initialising
+                    run_all(new_on_destroy);
+                }
+                component.$$.on_mount = [];
+            });
+        }
         after_update.forEach(add_render_callback);
     }
     function destroy_component(component, detaching) {
@@ -223,9 +254,10 @@ var app = (function () {
             // lifecycle
             on_mount: [],
             on_destroy: [],
+            on_disconnect: [],
             before_update: [],
             after_update: [],
-            context: new Map(parent_component ? parent_component.$$.context : []),
+            context: new Map(parent_component ? parent_component.$$.context : options.context || []),
             // everything else
             callbacks: blank_object(),
             dirty,
@@ -251,6 +283,7 @@ var app = (function () {
         $$.fragment = create_fragment ? create_fragment($$.ctx) : false;
         if (options.target) {
             if (options.hydrate) {
+                start_hydrating();
                 const nodes = children(options.target);
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 $$.fragment && $$.fragment.l(nodes);
@@ -262,7 +295,8 @@ var app = (function () {
             }
             if (options.intro)
                 transition_in(component.$$.fragment);
-            mount_component(component, options.target, options.anchor);
+            mount_component(component, options.target, options.anchor, options.customElement);
+            end_hydrating();
             flush();
         }
         set_current_component(parent_component);
@@ -294,7 +328,7 @@ var app = (function () {
     }
 
     function dispatch_dev(type, detail) {
-        document.dispatchEvent(custom_event(type, Object.assign({ version: '3.32.1' }, detail)));
+        document.dispatchEvent(custom_event(type, Object.assign({ version: '3.38.1' }, detail)));
     }
     function append_dev(target, node) {
         dispatch_dev('SvelteDOMInsert', { target, node });
@@ -375,65 +409,38 @@ var app = (function () {
         $inject_state() { }
     }
 
-    var util = {
-    	post: async function( url, args ) {
-    		console.log('[Overview] POST', url, args);
-
-    		for (const [key, value] of Object.entries(args)) {
-
-    			// use JSON parse to ensure proper type (object, string etc)
-
-    			try { args[key] = JSON.parse(value); } catch(err) { }
-    		}
-
-    		return await fetch(url,
-    		{
-    		    headers: {
-    		      'Accept': 'application/json',
-    		      'Content-Type': 'application/json'
-    		    },
-    		    method: 'POST',
-    		    body: JSON.stringify(args)
-    		})
-    	},
-    	get: async function( url, args ) {
-    		console.log('[Overview] GET', url, args);
-    		return await fetch(url + params)
-    	}
-    };
-
-    /* src/Overview.svelte generated by Svelte v3.32.1 */
+    /* src/Overview.svelte generated by Svelte v3.38.1 */
 
     const { Object: Object_1 } = globals;
     const file = "src/Overview.svelte";
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[20] = list[i][0];
-    	child_ctx[21] = list[i][1];
-    	child_ctx[22] = list;
-    	child_ctx[23] = i;
+    	child_ctx[19] = list[i][0];
+    	child_ctx[20] = list[i][1];
+    	child_ctx[21] = list;
+    	child_ctx[22] = i;
     	return child_ctx;
     }
 
     function get_each_context_1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[24] = list[i];
-    	child_ctx[26] = i;
+    	child_ctx[23] = list[i];
+    	child_ctx[25] = i;
     	return child_ctx;
     }
 
     function get_each_context_2(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[27] = list[i];
-    	child_ctx[29] = i;
+    	child_ctx[26] = list[i];
+    	child_ctx[28] = i;
     	return child_ctx;
     }
 
     function get_each_context_3(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[20] = list[i][0];
-    	child_ctx[21] = list[i][1];
+    	child_ctx[19] = list[i][0];
+    	child_ctx[20] = list[i][1];
     	return child_ctx;
     }
 
@@ -442,26 +449,26 @@ var app = (function () {
     	let div3;
     	let div1;
     	let div0;
-    	let t0_value = /*e*/ ctx[27].type.toUpperCase() + "";
+    	let t0_value = /*e*/ ctx[26].type.toUpperCase() + "";
     	let t0;
     	let t1;
     	let t2;
     	let t3;
     	let div2;
-    	let t4_value = /*e*/ ctx[27].description + "";
+    	let t4_value = /*e*/ ctx[26].description + "";
     	let t4;
     	let t5;
     	let mounted;
     	let dispose;
 
     	function select_block_type(ctx, dirty) {
-    		if (/*e*/ ctx[27].type == "get") return create_if_block_5;
+    		if (/*e*/ ctx[26].type == "get") return create_if_block_5;
     		return create_else_block_2;
     	}
 
     	let current_block_type = select_block_type(ctx);
     	let if_block = current_block_type(ctx);
-    	let each_value_3 = Object.entries(/*e*/ ctx[27].schema || {});
+    	let each_value_3 = Object.entries(/*e*/ ctx[26].schema || {});
     	validate_each_argument(each_value_3);
     	let each_blocks = [];
 
@@ -470,7 +477,7 @@ var app = (function () {
     	}
 
     	function click_handler_1(...args) {
-    		return /*click_handler_1*/ ctx[15](/*e*/ ctx[27], ...args);
+    		return /*click_handler_1*/ ctx[14](/*e*/ ctx[26], ...args);
     	}
 
     	const block = {
@@ -492,16 +499,16 @@ var app = (function () {
     			t4 = text(t4_value);
     			t5 = space();
     			attr_dev(div0, "class", "f1 w60px inline-block");
-    			toggle_class(div0, "error", /*e*/ ctx[27].type == "delete");
-    			toggle_class(div0, "success", /*e*/ ctx[27].type == "post");
-    			toggle_class(div0, "info", /*e*/ ctx[27].type == "get");
-    			add_location(div0, file, 85, 9, 2367);
+    			toggle_class(div0, "error", /*e*/ ctx[26].type == "delete");
+    			toggle_class(div0, "success", /*e*/ ctx[26].type == "post");
+    			toggle_class(div0, "info", /*e*/ ctx[26].type == "get");
+    			add_location(div0, file, 85, 9, 2397);
     			attr_dev(div1, "class", "flex align-items-center");
-    			add_location(div1, file, 84, 8, 2320);
-    			add_location(div2, file, 104, 8, 3004);
+    			add_location(div1, file, 84, 8, 2350);
+    			add_location(div2, file, 104, 8, 3034);
     			attr_dev(div3, "class", "flex justify-content-between plr2 ptb0-4 pointer align-items-center");
-    			toggle_class(div3, "pop", /*_current*/ ctx[0] == /*e*/ ctx[27].type + /*e*/ ctx[27].url + /*e*/ ctx[27].description);
-    			add_location(div3, file, 80, 7, 2067);
+    			toggle_class(div3, "pop", /*_current*/ ctx[0] == /*e*/ ctx[26].type + /*e*/ ctx[26].url + /*e*/ ctx[26].description);
+    			add_location(div3, file, 80, 7, 2097);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div3, anchor);
@@ -528,18 +535,18 @@ var app = (function () {
     		},
     		p: function update(new_ctx, dirty) {
     			ctx = new_ctx;
-    			if (dirty[0] & /*endpoints*/ 4 && t0_value !== (t0_value = /*e*/ ctx[27].type.toUpperCase() + "")) set_data_dev(t0, t0_value);
+    			if (dirty & /*endpoints*/ 4 && t0_value !== (t0_value = /*e*/ ctx[26].type.toUpperCase() + "")) set_data_dev(t0, t0_value);
 
-    			if (dirty[0] & /*endpoints*/ 4) {
-    				toggle_class(div0, "error", /*e*/ ctx[27].type == "delete");
+    			if (dirty & /*endpoints*/ 4) {
+    				toggle_class(div0, "error", /*e*/ ctx[26].type == "delete");
     			}
 
-    			if (dirty[0] & /*endpoints*/ 4) {
-    				toggle_class(div0, "success", /*e*/ ctx[27].type == "post");
+    			if (dirty & /*endpoints*/ 4) {
+    				toggle_class(div0, "success", /*e*/ ctx[26].type == "post");
     			}
 
-    			if (dirty[0] & /*endpoints*/ 4) {
-    				toggle_class(div0, "info", /*e*/ ctx[27].type == "get");
+    			if (dirty & /*endpoints*/ 4) {
+    				toggle_class(div0, "info", /*e*/ ctx[26].type == "get");
     			}
 
     			if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
@@ -554,8 +561,8 @@ var app = (function () {
     				}
     			}
 
-    			if (dirty[0] & /*endpoints*/ 4) {
-    				each_value_3 = Object.entries(/*e*/ ctx[27].schema || {});
+    			if (dirty & /*Object, endpoints*/ 4) {
+    				each_value_3 = Object.entries(/*e*/ ctx[26].schema || {});
     				validate_each_argument(each_value_3);
     				let i;
 
@@ -578,10 +585,10 @@ var app = (function () {
     				each_blocks.length = each_value_3.length;
     			}
 
-    			if (dirty[0] & /*endpoints*/ 4 && t4_value !== (t4_value = /*e*/ ctx[27].description + "")) set_data_dev(t4, t4_value);
+    			if (dirty & /*endpoints*/ 4 && t4_value !== (t4_value = /*e*/ ctx[26].description + "")) set_data_dev(t4, t4_value);
 
-    			if (dirty[0] & /*_current, endpoints*/ 5) {
-    				toggle_class(div3, "pop", /*_current*/ ctx[0] == /*e*/ ctx[27].type + /*e*/ ctx[27].url + /*e*/ ctx[27].description);
+    			if (dirty & /*_current, endpoints*/ 5) {
+    				toggle_class(div3, "pop", /*_current*/ ctx[0] == /*e*/ ctx[26].type + /*e*/ ctx[26].url + /*e*/ ctx[26].description);
     			}
     		},
     		d: function destroy(detaching) {
@@ -607,7 +614,7 @@ var app = (function () {
     // (98:9) {:else}
     function create_else_block_2(ctx) {
     	let div;
-    	let t_value = /*e*/ ctx[27].url + "";
+    	let t_value = /*e*/ ctx[26].url + "";
     	let t;
 
     	const block = {
@@ -615,14 +622,14 @@ var app = (function () {
     			div = element("div");
     			t = text(t_value);
     			attr_dev(div, "class", "sink highlight plr0-8 ptb0-4");
-    			add_location(div, file, 98, 10, 2770);
+    			add_location(div, file, 98, 10, 2800);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
     			append_dev(div, t);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty[0] & /*endpoints*/ 4 && t_value !== (t_value = /*e*/ ctx[27].url + "")) set_data_dev(t, t_value);
+    			if (dirty & /*endpoints*/ 4 && t_value !== (t_value = /*e*/ ctx[26].url + "")) set_data_dev(t, t_value);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(div);
@@ -643,7 +650,7 @@ var app = (function () {
     // (93:9) {#if e.type =='get'}
     function create_if_block_5(ctx) {
     	let a;
-    	let t_value = /*e*/ ctx[27].url + "";
+    	let t_value = /*e*/ ctx[26].url + "";
     	let t;
     	let a_href_value;
 
@@ -651,19 +658,19 @@ var app = (function () {
     		c: function create() {
     			a = element("a");
     			t = text(t_value);
-    			attr_dev(a, "href", a_href_value = /*e*/ ctx[27].url);
+    			attr_dev(a, "href", a_href_value = /*e*/ ctx[26].url);
     			attr_dev(a, "target", "_blank");
     			attr_dev(a, "class", "sink highlight plr0-8 ptb0-4");
-    			add_location(a, file, 93, 10, 2629);
+    			add_location(a, file, 93, 10, 2659);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, a, anchor);
     			append_dev(a, t);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty[0] & /*endpoints*/ 4 && t_value !== (t_value = /*e*/ ctx[27].url + "")) set_data_dev(t, t_value);
+    			if (dirty & /*endpoints*/ 4 && t_value !== (t_value = /*e*/ ctx[26].url + "")) set_data_dev(t, t_value);
 
-    			if (dirty[0] & /*endpoints*/ 4 && a_href_value !== (a_href_value = /*e*/ ctx[27].url)) {
+    			if (dirty & /*endpoints*/ 4 && a_href_value !== (a_href_value = /*e*/ ctx[26].url)) {
     				attr_dev(a, "href", a_href_value);
     			}
     		},
@@ -686,7 +693,7 @@ var app = (function () {
     // (101:9) {#each Object.entries(e.schema || {}) as [key, value]}
     function create_each_block_3(ctx) {
     	let div;
-    	let t_value = /*key*/ ctx[20] + "";
+    	let t_value = /*key*/ ctx[19] + "";
     	let t;
 
     	const block = {
@@ -694,14 +701,14 @@ var app = (function () {
     			div = element("div");
     			t = text(t_value);
     			attr_dev(div, "class", "pop plr0-8 ptb0-4 fade");
-    			add_location(div, file, 101, 10, 2916);
+    			add_location(div, file, 101, 10, 2946);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
     			append_dev(div, t);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty[0] & /*endpoints*/ 4 && t_value !== (t_value = /*key*/ ctx[20] + "")) set_data_dev(t, t_value);
+    			if (dirty & /*endpoints*/ 4 && t_value !== (t_value = /*key*/ ctx[19] + "")) set_data_dev(t, t_value);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(div);
@@ -722,7 +729,7 @@ var app = (function () {
     // (79:5) {#each ee as e, ii}
     function create_each_block_2(ctx) {
     	let if_block_anchor;
-    	let if_block = /*e*/ ctx[27].type != "use" && create_if_block_4(ctx);
+    	let if_block = /*e*/ ctx[26].type != "use" && create_if_block_4(ctx);
 
     	const block = {
     		c: function create() {
@@ -734,7 +741,7 @@ var app = (function () {
     			insert_dev(target, if_block_anchor, anchor);
     		},
     		p: function update(ctx, dirty) {
-    			if (/*e*/ ctx[27].type != "use") {
+    			if (/*e*/ ctx[26].type != "use") {
     				if (if_block) {
     					if_block.p(ctx, dirty);
     				} else {
@@ -768,11 +775,11 @@ var app = (function () {
     function create_each_block_1(ctx) {
     	let div;
     	let span;
-    	let t0_value = /*categories*/ ctx[10][/*i*/ ctx[26]] + "";
+    	let t0_value = /*categories*/ ctx[9][/*i*/ ctx[25]] + "";
     	let t0;
     	let t1;
     	let each_1_anchor;
-    	let each_value_2 = /*ee*/ ctx[24];
+    	let each_value_2 = /*ee*/ ctx[23];
     	validate_each_argument(each_value_2);
     	let each_blocks = [];
 
@@ -793,9 +800,9 @@ var app = (function () {
 
     			each_1_anchor = empty();
     			attr_dev(span, "class", "f3");
-    			add_location(span, file, 77, 30, 1959);
+    			add_location(span, file, 77, 30, 1989);
     			attr_dev(div, "class", "plr2 ptb0-4");
-    			add_location(div, file, 77, 5, 1934);
+    			add_location(div, file, 77, 5, 1964);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -810,8 +817,8 @@ var app = (function () {
     			insert_dev(target, each_1_anchor, anchor);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty[0] & /*_current, endpoints, response*/ 7) {
-    				each_value_2 = /*ee*/ ctx[24];
+    			if (dirty & /*_current, endpoints, response, Object*/ 7) {
+    				each_value_2 = /*ee*/ ctx[23];
     				validate_each_argument(each_value_2);
     				let i;
 
@@ -861,7 +868,7 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			div.textContent = "No endpoint current.";
-    			add_location(div, file, 158, 6, 4726);
+    			add_location(div, file, 158, 6, 4756);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -889,19 +896,19 @@ var app = (function () {
     	let t0;
     	let div1;
     	let div0;
-    	let t1_value = /*current*/ ctx[8].url + "";
+    	let t1_value = /*current*/ ctx[7].url + "";
     	let t1;
     	let t2;
     	let button;
 
-    	let t3_value = (/*waiting*/ ctx[7]
+    	let t3_value = (/*waiting*/ ctx[11]
     	? "waiting"
-    	: /*current*/ ctx[8].type.toUpperCase()) + "";
+    	: /*current*/ ctx[7].type.toUpperCase()) + "";
 
     	let t3;
     	let mounted;
     	let dispose;
-    	let each_value = Object.entries(/*current*/ ctx[8].schema || {});
+    	let each_value = Object.entries(/*current*/ ctx[7].schema || {});
     	validate_each_argument(each_value);
     	let each_blocks = [];
 
@@ -909,7 +916,7 @@ var app = (function () {
     		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
     	}
 
-    	let if_block = /*current*/ ctx[8].type == "get" && create_if_block_1(ctx);
+    	let if_block = /*current*/ ctx[7].type == "get" && create_if_block_1(ctx);
 
     	const block = {
     		c: function create() {
@@ -928,13 +935,13 @@ var app = (function () {
     			button = element("button");
     			t3 = text(t3_value);
     			attr_dev(div0, "class", "f3");
-    			add_location(div0, file, 151, 8, 4438);
-    			button.disabled = /*waiting*/ ctx[7];
+    			add_location(div0, file, 151, 8, 4468);
+    			button.disabled = /*waiting*/ ctx[11];
     			attr_dev(button, "class", "ptb0-4 plr1");
-    			add_location(button, file, 154, 8, 4554);
+    			add_location(button, file, 154, 8, 4584);
     			attr_dev(div1, "class", "flex align-items-flex-end justify-content-between");
-    			add_location(div1, file, 150, 7, 4366);
-    			add_location(form, file, 120, 6, 3352);
+    			add_location(div1, file, 150, 7, 4396);
+    			add_location(form, file, 120, 6, 3382);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, form, anchor);
@@ -951,16 +958,16 @@ var app = (function () {
     			append_dev(div1, t2);
     			append_dev(div1, button);
     			append_dev(button, t3);
-    			/*form_binding*/ ctx[19](form);
+    			/*form_binding*/ ctx[18](form);
 
     			if (!mounted) {
-    				dispose = listen_dev(button, "click", /*send*/ ctx[12], false, false, false);
+    				dispose = listen_dev(button, "click", send, false, false, false);
     				mounted = true;
     			}
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty[0] & /*current, values, setParams*/ 2312) {
-    				each_value = Object.entries(/*current*/ ctx[8].schema || {});
+    			if (dirty & /*Object, current, values, setParams*/ 1160) {
+    				each_value = Object.entries(/*current*/ ctx[7].schema || {});
     				validate_each_argument(each_value);
     				let i;
 
@@ -983,9 +990,9 @@ var app = (function () {
     				each_blocks.length = each_value.length;
     			}
 
-    			if (dirty[0] & /*current*/ 256 && t1_value !== (t1_value = /*current*/ ctx[8].url + "")) set_data_dev(t1, t1_value);
+    			if (dirty & /*current*/ 128 && t1_value !== (t1_value = /*current*/ ctx[7].url + "")) set_data_dev(t1, t1_value);
 
-    			if (/*current*/ ctx[8].type == "get") {
+    			if (/*current*/ ctx[7].type == "get") {
     				if (if_block) {
     					if_block.p(ctx, dirty);
     				} else {
@@ -998,19 +1005,15 @@ var app = (function () {
     				if_block = null;
     			}
 
-    			if (dirty[0] & /*waiting, current*/ 384 && t3_value !== (t3_value = (/*waiting*/ ctx[7]
+    			if (dirty & /*current*/ 128 && t3_value !== (t3_value = (/*waiting*/ ctx[11]
     			? "waiting"
-    			: /*current*/ ctx[8].type.toUpperCase()) + "")) set_data_dev(t3, t3_value);
-
-    			if (dirty[0] & /*waiting*/ 128) {
-    				prop_dev(button, "disabled", /*waiting*/ ctx[7]);
-    			}
+    			: /*current*/ ctx[7].type.toUpperCase()) + "")) set_data_dev(t3, t3_value);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(form);
     			destroy_each(each_blocks, detaching);
     			if (if_block) if_block.d();
-    			/*form_binding*/ ctx[19](null);
+    			/*form_binding*/ ctx[18](null);
     			mounted = false;
     			dispose();
     		}
@@ -1037,26 +1040,26 @@ var app = (function () {
     	let dispose;
 
     	function input_input_handler() {
-    		/*input_input_handler*/ ctx[18].call(input, /*key*/ ctx[20]);
+    		/*input_input_handler*/ ctx[17].call(input, /*key*/ ctx[19]);
     	}
 
     	const block = {
     		c: function create() {
     			input = element("input");
-    			attr_dev(input, "name", input_name_value = /*key*/ ctx[20]);
+    			attr_dev(input, "name", input_name_value = /*key*/ ctx[19]);
     			attr_dev(input, "class", "flex grow p0-6");
-    			input.required = input_required_value = /*value*/ ctx[21].required;
-    			attr_dev(input, "placeholder", input_placeholder_value = /*value*/ ctx[21].desc);
-    			add_location(input, file, 140, 10, 4100);
+    			input.required = input_required_value = /*value*/ ctx[20].required;
+    			attr_dev(input, "placeholder", input_placeholder_value = /*value*/ ctx[20].desc);
+    			add_location(input, file, 140, 10, 4130);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, input, anchor);
-    			set_input_value(input, /*values*/ ctx[3][/*key*/ ctx[20]]);
+    			set_input_value(input, /*values*/ ctx[3][/*key*/ ctx[19]]);
 
     			if (!mounted) {
     				dispose = [
     					listen_dev(input, "input", input_input_handler),
-    					listen_dev(input, "keyup", /*setParams*/ ctx[11], false, false, false)
+    					listen_dev(input, "keyup", /*setParams*/ ctx[10], false, false, false)
     				];
 
     				mounted = true;
@@ -1065,20 +1068,20 @@ var app = (function () {
     		p: function update(new_ctx, dirty) {
     			ctx = new_ctx;
 
-    			if (dirty[0] & /*current*/ 256 && input_name_value !== (input_name_value = /*key*/ ctx[20])) {
+    			if (dirty & /*current*/ 128 && input_name_value !== (input_name_value = /*key*/ ctx[19])) {
     				attr_dev(input, "name", input_name_value);
     			}
 
-    			if (dirty[0] & /*current*/ 256 && input_required_value !== (input_required_value = /*value*/ ctx[21].required)) {
+    			if (dirty & /*current*/ 128 && input_required_value !== (input_required_value = /*value*/ ctx[20].required)) {
     				prop_dev(input, "required", input_required_value);
     			}
 
-    			if (dirty[0] & /*current*/ 256 && input_placeholder_value !== (input_placeholder_value = /*value*/ ctx[21].desc)) {
+    			if (dirty & /*current*/ 128 && input_placeholder_value !== (input_placeholder_value = /*value*/ ctx[20].desc)) {
     				attr_dev(input, "placeholder", input_placeholder_value);
     			}
 
-    			if (dirty[0] & /*values, current*/ 264 && input.value !== /*values*/ ctx[3][/*key*/ ctx[20]]) {
-    				set_input_value(input, /*values*/ ctx[3][/*key*/ ctx[20]]);
+    			if (dirty & /*values, Object, current*/ 136 && input.value !== /*values*/ ctx[3][/*key*/ ctx[19]]) {
+    				set_input_value(input, /*values*/ ctx[3][/*key*/ ctx[19]]);
     			}
     		},
     		d: function destroy(detaching) {
@@ -1109,27 +1112,27 @@ var app = (function () {
     	let dispose;
 
     	function textarea_input_handler() {
-    		/*textarea_input_handler*/ ctx[17].call(textarea, /*key*/ ctx[20]);
+    		/*textarea_input_handler*/ ctx[16].call(textarea, /*key*/ ctx[19]);
     	}
 
     	const block = {
     		c: function create() {
     			textarea = element("textarea");
-    			attr_dev(textarea, "name", textarea_name_value = /*key*/ ctx[20]);
+    			attr_dev(textarea, "name", textarea_name_value = /*key*/ ctx[19]);
     			attr_dev(textarea, "class", "flex grow p0-6");
     			attr_dev(textarea, "rows", "6");
-    			textarea.required = textarea_required_value = /*value*/ ctx[21].required;
-    			attr_dev(textarea, "placeholder", textarea_placeholder_value = /*value*/ ctx[21].desc);
-    			add_location(textarea, file, 131, 10, 3834);
+    			textarea.required = textarea_required_value = /*value*/ ctx[20].required;
+    			attr_dev(textarea, "placeholder", textarea_placeholder_value = /*value*/ ctx[20].desc);
+    			add_location(textarea, file, 131, 10, 3864);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, textarea, anchor);
-    			set_input_value(textarea, /*values*/ ctx[3][/*key*/ ctx[20]]);
+    			set_input_value(textarea, /*values*/ ctx[3][/*key*/ ctx[19]]);
 
     			if (!mounted) {
     				dispose = [
     					listen_dev(textarea, "input", textarea_input_handler),
-    					listen_dev(textarea, "keyup", /*setParams*/ ctx[11], false, false, false)
+    					listen_dev(textarea, "keyup", /*setParams*/ ctx[10], false, false, false)
     				];
 
     				mounted = true;
@@ -1138,20 +1141,20 @@ var app = (function () {
     		p: function update(new_ctx, dirty) {
     			ctx = new_ctx;
 
-    			if (dirty[0] & /*current*/ 256 && textarea_name_value !== (textarea_name_value = /*key*/ ctx[20])) {
+    			if (dirty & /*current*/ 128 && textarea_name_value !== (textarea_name_value = /*key*/ ctx[19])) {
     				attr_dev(textarea, "name", textarea_name_value);
     			}
 
-    			if (dirty[0] & /*current*/ 256 && textarea_required_value !== (textarea_required_value = /*value*/ ctx[21].required)) {
+    			if (dirty & /*current*/ 128 && textarea_required_value !== (textarea_required_value = /*value*/ ctx[20].required)) {
     				prop_dev(textarea, "required", textarea_required_value);
     			}
 
-    			if (dirty[0] & /*current*/ 256 && textarea_placeholder_value !== (textarea_placeholder_value = /*value*/ ctx[21].desc)) {
+    			if (dirty & /*current*/ 128 && textarea_placeholder_value !== (textarea_placeholder_value = /*value*/ ctx[20].desc)) {
     				attr_dev(textarea, "placeholder", textarea_placeholder_value);
     			}
 
-    			if (dirty[0] & /*values, current*/ 264) {
-    				set_input_value(textarea, /*values*/ ctx[3][/*key*/ ctx[20]]);
+    			if (dirty & /*values, Object, current*/ 136) {
+    				set_input_value(textarea, /*values*/ ctx[3][/*key*/ ctx[19]]);
     			}
     		},
     		d: function destroy(detaching) {
@@ -1181,20 +1184,20 @@ var app = (function () {
     	let dispose;
 
     	function input_change_handler() {
-    		/*input_change_handler*/ ctx[16].call(input, /*key*/ ctx[20]);
+    		/*input_change_handler*/ ctx[15].call(input, /*key*/ ctx[19]);
     	}
 
     	const block = {
     		c: function create() {
     			input = element("input");
-    			attr_dev(input, "name", input_name_value = /*key*/ ctx[20]);
+    			attr_dev(input, "name", input_name_value = /*key*/ ctx[19]);
     			attr_dev(input, "type", "checkbox");
-    			input.required = input_required_value = /*value*/ ctx[21].required;
-    			add_location(input, file, 125, 10, 3618);
+    			input.required = input_required_value = /*value*/ ctx[20].required;
+    			add_location(input, file, 125, 10, 3648);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, input, anchor);
-    			set_input_value(input, /*values*/ ctx[3][/*key*/ ctx[20]]);
+    			set_input_value(input, /*values*/ ctx[3][/*key*/ ctx[19]]);
 
     			if (!mounted) {
     				dispose = listen_dev(input, "change", input_change_handler);
@@ -1204,16 +1207,16 @@ var app = (function () {
     		p: function update(new_ctx, dirty) {
     			ctx = new_ctx;
 
-    			if (dirty[0] & /*current*/ 256 && input_name_value !== (input_name_value = /*key*/ ctx[20])) {
+    			if (dirty & /*current*/ 128 && input_name_value !== (input_name_value = /*key*/ ctx[19])) {
     				attr_dev(input, "name", input_name_value);
     			}
 
-    			if (dirty[0] & /*current*/ 256 && input_required_value !== (input_required_value = /*value*/ ctx[21].required)) {
+    			if (dirty & /*current*/ 128 && input_required_value !== (input_required_value = /*value*/ ctx[20].required)) {
     				prop_dev(input, "required", input_required_value);
     			}
 
-    			if (dirty[0] & /*values, current*/ 264) {
-    				set_input_value(input, /*values*/ ctx[3][/*key*/ ctx[20]]);
+    			if (dirty & /*values, Object, current*/ 136) {
+    				set_input_value(input, /*values*/ ctx[3][/*key*/ ctx[19]]);
     			}
     		},
     		d: function destroy(detaching) {
@@ -1238,15 +1241,15 @@ var app = (function () {
     function create_each_block(ctx) {
     	let div1;
     	let div0;
-    	let t0_value = /*key*/ ctx[20] + "";
+    	let t0_value = /*key*/ ctx[19] + "";
     	let t0;
-    	let t1_value = (/*value*/ ctx[21].required ? "*" : "") + "";
+    	let t1_value = (/*value*/ ctx[20].required ? "*" : "") + "";
     	let t1;
     	let t2;
 
     	function select_block_type_2(ctx, dirty) {
-    		if (/*value*/ ctx[21].type == "boolean") return create_if_block_2;
-    		if (/*value*/ ctx[21].type == "object" || /*value*/ ctx[21].type == "array") return create_if_block_3;
+    		if (/*value*/ ctx[20].type == "boolean") return create_if_block_2;
+    		if (/*value*/ ctx[20].type == "object" || /*value*/ ctx[20].type == "array") return create_if_block_3;
     		return create_else_block;
     	}
 
@@ -1262,9 +1265,9 @@ var app = (function () {
     			t2 = space();
     			if_block.c();
     			attr_dev(div0, "class", "basis80px");
-    			add_location(div0, file, 123, 9, 3507);
+    			add_location(div0, file, 123, 9, 3537);
     			attr_dev(div1, "class", "flex align-items-center pb0-8");
-    			add_location(div1, file, 122, 8, 3454);
+    			add_location(div1, file, 122, 8, 3484);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div1, anchor);
@@ -1275,8 +1278,8 @@ var app = (function () {
     			if_block.m(div1, null);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty[0] & /*current*/ 256 && t0_value !== (t0_value = /*key*/ ctx[20] + "")) set_data_dev(t0, t0_value);
-    			if (dirty[0] & /*current*/ 256 && t1_value !== (t1_value = (/*value*/ ctx[21].required ? "*" : "") + "")) set_data_dev(t1, t1_value);
+    			if (dirty & /*current*/ 128 && t0_value !== (t0_value = /*key*/ ctx[19] + "")) set_data_dev(t0, t0_value);
+    			if (dirty & /*current*/ 128 && t1_value !== (t1_value = (/*value*/ ctx[20].required ? "*" : "") + "")) set_data_dev(t1, t1_value);
 
     			if (current_block_type === (current_block_type = select_block_type_2(ctx)) && if_block) {
     				if_block.p(ctx, dirty);
@@ -1316,14 +1319,14 @@ var app = (function () {
     		c: function create() {
     			span = element("span");
     			t = text(/*params*/ ctx[4]);
-    			add_location(span, file, 152, 49, 4504);
+    			add_location(span, file, 152, 49, 4534);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
     			append_dev(span, t);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty[0] & /*params*/ 16) set_data_dev(t, /*params*/ ctx[4]);
+    			if (dirty & /*params*/ 16) set_data_dev(t, /*params*/ ctx[4]);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(span);
@@ -1365,9 +1368,9 @@ var app = (function () {
     	let t9;
     	let div8;
 
-    	let raw_value = (/*waiting*/ ctx[7]
+    	let raw_value = (/*waiting*/ ctx[11]
     	? "waiting"
-    	: /*responseStr*/ ctx[9] || "~") + "";
+    	: /*responseStr*/ ctx[8] || "~") + "";
 
     	let mounted;
     	let dispose;
@@ -1380,7 +1383,7 @@ var app = (function () {
     	}
 
     	function select_block_type_1(ctx, dirty) {
-    		if (/*current*/ ctx[8]) return create_if_block;
+    		if (/*current*/ ctx[7]) return create_if_block;
     		return create_else_block_1;
     	}
 
@@ -1422,39 +1425,39 @@ var app = (function () {
     			t9 = space();
     			div8 = element("div");
     			attr_dev(div0, "class", "f3");
-    			add_location(div0, file, 69, 5, 1731);
+    			add_location(div0, file, 69, 5, 1761);
     			toggle_class(button, "filled", /*permissions*/ ctx[5]);
-    			add_location(button, file, 70, 5, 1762);
+    			add_location(button, file, 70, 5, 1792);
     			attr_dev(div1, "class", "flex plr2 ptb0-4 align-items-flex-end justify-content-between");
-    			add_location(div1, file, 68, 4, 1650);
+    			add_location(div1, file, 68, 4, 1680);
     			attr_dev(div2, "class", "ptb1 overflow-auto bb1-solid");
-    			add_location(div2, file, 66, 3, 1602);
+    			add_location(div2, file, 66, 3, 1632);
     			attr_dev(div3, "class", "flex flex-column grow br1-solid no-basis");
-    			add_location(div3, file, 64, 2, 1543);
+    			add_location(div3, file, 64, 2, 1573);
     			attr_dev(span0, "class", "f3");
-    			add_location(span0, file, 117, 29, 3267);
+    			add_location(span0, file, 117, 29, 3297);
     			attr_dev(div4, "class", "plr2 ptb0-4");
-    			add_location(div4, file, 117, 4, 3242);
+    			add_location(div4, file, 117, 4, 3272);
     			attr_dev(div5, "class", "p2");
-    			add_location(div5, file, 118, 4, 3310);
+    			add_location(div5, file, 118, 4, 3340);
     			attr_dev(div6, "class", "ptb1 basis-auto bb1-solid");
     			set_style(div6, "flex-basis", "auto");
-    			add_location(div6, file, 116, 3, 3173);
+    			add_location(div6, file, 116, 3, 3203);
     			attr_dev(span1, "class", "f3");
-    			add_location(span1, file, 164, 29, 4861);
+    			add_location(span1, file, 164, 29, 4891);
     			attr_dev(div7, "class", "plr2 ptb0-4");
-    			add_location(div7, file, 164, 4, 4836);
+    			add_location(div7, file, 164, 4, 4866);
     			attr_dev(div8, "class", "p2");
     			set_style(div8, "font-family", "monospace");
     			set_style(div8, "white-space", "pre-wrap");
-    			add_location(div8, file, 165, 4, 4904);
+    			add_location(div8, file, 165, 4, 4934);
     			attr_dev(div9, "class", "ptb1 grow overflow-auto");
-    			add_location(div9, file, 163, 3, 4794);
+    			add_location(div9, file, 163, 3, 4824);
     			attr_dev(div10, "class", "flex flex-column grow no-basis");
-    			add_location(div10, file, 113, 2, 3123);
+    			add_location(div10, file, 113, 2, 3153);
     			attr_dev(div11, "class", "flex h100vh no-basis");
-    			add_location(div11, file, 63, 1, 1506);
-    			add_location(main, file, 62, 0, 1498);
+    			add_location(div11, file, 63, 1, 1536);
+    			add_location(main, file, 62, 0, 1528);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -1491,16 +1494,16 @@ var app = (function () {
     			div8.innerHTML = raw_value;
 
     			if (!mounted) {
-    				dispose = listen_dev(button, "click", /*click_handler*/ ctx[14], false, false, false);
+    				dispose = listen_dev(button, "click", /*click_handler*/ ctx[13], false, false, false);
     				mounted = true;
     			}
     		},
-    		p: function update(ctx, dirty) {
-    			if (dirty[0] & /*permissions*/ 32) {
+    		p: function update(ctx, [dirty]) {
+    			if (dirty & /*permissions*/ 32) {
     				toggle_class(button, "filled", /*permissions*/ ctx[5]);
     			}
 
-    			if (dirty[0] & /*endpoints, _current, response, categories*/ 1031) {
+    			if (dirty & /*endpoints, _current, response, Object, categories*/ 519) {
     				each_value_1 = /*endpoints*/ ctx[2];
     				validate_each_argument(each_value_1);
     				let i;
@@ -1536,9 +1539,9 @@ var app = (function () {
     				}
     			}
 
-    			if (dirty[0] & /*waiting, responseStr*/ 640 && raw_value !== (raw_value = (/*waiting*/ ctx[7]
+    			if (dirty & /*responseStr*/ 256 && raw_value !== (raw_value = (/*waiting*/ ctx[11]
     			? "waiting"
-    			: /*responseStr*/ ctx[9] || "~") + "")) div8.innerHTML = raw_value;		},
+    			: /*responseStr*/ ctx[8] || "~") + "")) div8.innerHTML = raw_value;		},
     		i: noop,
     		o: noop,
     		d: function destroy(detaching) {
@@ -1560,6 +1563,11 @@ var app = (function () {
 
     	return block;
     }
+
+    async function send(e) {
+    	
+    } // e.preventDefault()
+    // e.stopPropagation()
 
     function instance($$self, $$props, $$invalidate) {
     	let current;
@@ -1585,7 +1593,7 @@ var app = (function () {
 
     			idx = categories.indexOf(k);
     			endpoints[idx].push(e);
-    			$$invalidate(13, keyed[e.type + e.url + e.description] = e, keyed);
+    			$$invalidate(12, keyed[e.type + e.url + e.description] = e, keyed);
     		});
 
     		$$invalidate(2, endpoints = endpoints.reverse().reverse());
@@ -1610,19 +1618,6 @@ var app = (function () {
     	let formEl;
     	let response;
     	let waiting = false;
-
-    	async function send(e) {
-    		e.preventDefault();
-    		e.stopPropagation();
-    		$$invalidate(1, response = "");
-    		const form = new FormData(formEl);
-    		const args = Object.fromEntries(form.entries());
-    		$$invalidate(7, waiting = true);
-    		if (current.type == "get") $$invalidate(1, response = await (await util.get(current.url, args)).json());
-    		if (current.type == "post") $$invalidate(1, response = await (await util.post(current.url, args)).json());
-    		$$invalidate(7, waiting = false);
-    	}
-
     	const writable_props = [];
 
     	Object_1.keys($$props).forEach(key => {
@@ -1635,19 +1630,19 @@ var app = (function () {
     	function input_change_handler(key) {
     		values[key] = this.value;
     		$$invalidate(3, values);
-    		(($$invalidate(8, current), $$invalidate(13, keyed)), $$invalidate(0, _current));
+    		(($$invalidate(7, current), $$invalidate(12, keyed)), $$invalidate(0, _current));
     	}
 
     	function textarea_input_handler(key) {
     		values[key] = this.value;
     		$$invalidate(3, values);
-    		(($$invalidate(8, current), $$invalidate(13, keyed)), $$invalidate(0, _current));
+    		(($$invalidate(7, current), $$invalidate(12, keyed)), $$invalidate(0, _current));
     	}
 
     	function input_input_handler(key) {
     		values[key] = this.value;
     		$$invalidate(3, values);
-    		(($$invalidate(8, current), $$invalidate(13, keyed)), $$invalidate(0, _current));
+    		(($$invalidate(7, current), $$invalidate(12, keyed)), $$invalidate(0, _current));
     	}
 
     	function form_binding($$value) {
@@ -1659,8 +1654,6 @@ var app = (function () {
 
     	$$self.$capture_state = () => ({
     		onMount,
-    		post: util.post,
-    		get: util.get,
     		categories,
     		endpoints,
     		keyed,
@@ -1678,18 +1671,18 @@ var app = (function () {
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ("categories" in $$props) $$invalidate(10, categories = $$props.categories);
+    		if ("categories" in $$props) $$invalidate(9, categories = $$props.categories);
     		if ("endpoints" in $$props) $$invalidate(2, endpoints = $$props.endpoints);
-    		if ("keyed" in $$props) $$invalidate(13, keyed = $$props.keyed);
+    		if ("keyed" in $$props) $$invalidate(12, keyed = $$props.keyed);
     		if ("_current" in $$props) $$invalidate(0, _current = $$props._current);
     		if ("values" in $$props) $$invalidate(3, values = $$props.values);
     		if ("params" in $$props) $$invalidate(4, params = $$props.params);
     		if ("permissions" in $$props) $$invalidate(5, permissions = $$props.permissions);
     		if ("formEl" in $$props) $$invalidate(6, formEl = $$props.formEl);
     		if ("response" in $$props) $$invalidate(1, response = $$props.response);
-    		if ("waiting" in $$props) $$invalidate(7, waiting = $$props.waiting);
-    		if ("current" in $$props) $$invalidate(8, current = $$props.current);
-    		if ("responseStr" in $$props) $$invalidate(9, responseStr = $$props.responseStr);
+    		if ("waiting" in $$props) $$invalidate(11, waiting = $$props.waiting);
+    		if ("current" in $$props) $$invalidate(7, current = $$props.current);
+    		if ("responseStr" in $$props) $$invalidate(8, responseStr = $$props.responseStr);
     	};
 
     	if ($$props && "$$inject" in $$props) {
@@ -1697,12 +1690,19 @@ var app = (function () {
     	}
 
     	$$self.$$.update = () => {
-    		if ($$self.$$.dirty[0] & /*keyed, _current*/ 8193) {
-    			 $$invalidate(8, current = keyed[_current]);
+    		if ($$self.$$.dirty & /*keyed, _current*/ 4097) {
+    			$$invalidate(7, current = keyed[_current]);
     		}
 
-    		if ($$self.$$.dirty[0] & /*response*/ 2) {
-    			 $$invalidate(9, responseStr = typeof response == "object" || typeof response == "array"
+    		if ($$self.$$.dirty & /*response*/ 2) {
+    			// response = ''
+    			//    const form = new FormData(formEl)
+    			// const args = Object.fromEntries(form.entries())
+    			// waiting = true
+    			// if (current.type == 'get') response = await (await get( current.url, args )).json()
+    			// if (current.type == 'post') response = await (await post( current.url, args )).json()
+    			// waiting = false
+    			$$invalidate(8, responseStr = typeof response == "object" || typeof response == "array"
     			? JSON.stringify(response, null, 2)
     			: response);
     		}
@@ -1716,12 +1716,11 @@ var app = (function () {
     		params,
     		permissions,
     		formEl,
-    		waiting,
     		current,
     		responseStr,
     		categories,
     		setParams,
-    		send,
+    		waiting,
     		keyed,
     		click_handler,
     		click_handler_1,
@@ -1735,7 +1734,7 @@ var app = (function () {
     class Overview extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance, create_fragment, safe_not_equal, {}, [-1, -1]);
+    		init(this, options, instance, create_fragment, safe_not_equal, {});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,

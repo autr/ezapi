@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { post, get } from '../util.js'
+	// import { post, get } from '../util.js'
 
 	let categories = []
 	let endpoints = []
@@ -46,15 +46,15 @@
 	let waiting = false
 
 	async function send( e ) {
-		e.preventDefault()
-		e.stopPropagation()
-		response = ''
-	    const form = new FormData(formEl)
-		const args = Object.fromEntries(form.entries())
-		waiting = true
-		if (current.type == 'get') response = await (await get( current.url, args )).json()
-		if (current.type == 'post') response = await (await post( current.url, args )).json()
-		waiting = false
+		// e.preventDefault()
+		// e.stopPropagation()
+		// response = ''
+	 //    const form = new FormData(formEl)
+		// const args = Object.fromEntries(form.entries())
+		// waiting = true
+		// if (current.type == 'get') response = await (await get( current.url, args )).json()
+		// if (current.type == 'post') response = await (await post( current.url, args )).json()
+		// waiting = false
 	}
 
 	$: responseStr = ( typeof(response) == 'object' || typeof(response) == 'array' ) ? JSON.stringify(response, null, 2) : response
