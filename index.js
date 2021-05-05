@@ -300,13 +300,17 @@ module.exports = {
 
 			const template = [
 			    {
-			        "username": "guest",
-			        "allows": "get",
-			        "disallows": "post,delete,push"
+					"username": "guest",
+					"allows": {
+						"get": "/*",
+						"post": "/*",
+						"put": "/*",
+						"delete": "/*"
+					}
 			    }
 			]
 
-			const dir = './bin'
+			const dir = path.join( __dirname, './bin' )
 			const dest = usersPath( opts)
 
 
@@ -314,7 +318,7 @@ module.exports = {
 				if (!fs.existsSync(dir))  fs.mkdirSync(dir)
 				const exists = await fs.existsSync( dest )
 				if (!exists) {
-					await fs.writeFileSync( dest, JSON.stringify( template ) )
+					await fs.writeFileSync( dest, JSON.stringify( template, null, 2 ) )
 					console.log(`[api] ✅  success creating -> ${dest}` )
 				}
 			} catch(err) {

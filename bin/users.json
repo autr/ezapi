@@ -1,29 +1,11 @@
 [
-    {
-        "username": "guest",
-        "allows": {
-        	"get": "/*",
-        	"post": "/*",
-        	"put": "/*",
-        	"delete": "/*"
-        }
-    },
-    {
-        "username": "pi",
-        "allows": {
-            "get": "/*",
-            "post": "/*",
-            "put": "/*",
-            "delete": null
-        }
-    },
-    {
-        "username": "gilbert",
-        "allows": {
-            "get": "/*",
-            "post": "/*",
-            "put": "/*",
-            "delete": "/*"
-        }
+  {
+    "username": "guest",
+    "allows": {
+      "get": "/*",
+      "post": "/*",
+      "put": "/*",
+      "delete": "/*"
     }
+  }
 ]
