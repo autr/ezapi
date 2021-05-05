@@ -1,12 +1,12 @@
 {
   "name": "ez-ezapi",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "app.js",
   "author": "G.Sinnott",
   "license": "MIT",
   "private": false,
   "engines": {
-    "node": "15.x"
+    "node": "14.x"
   },
   "description": "Autoconfiguring APIs",
   "repository": {
