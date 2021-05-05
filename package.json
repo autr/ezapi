@@ -1,6 +1,6 @@
 {
   "name": "ez-ezapi",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "main": "app.js",
   "author": "G.Sinnott",
   "license": "MIT",
@@ -38,9 +38,6 @@
     "postcss": "^8.2.2",
     "similarity": "^1.2.1",
     "ua-parser-js": "^0.7.28"
-  },
-  "optionalDependencies": {
-    "node-linux-pam": "^0.0.1"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^3.1.2",
