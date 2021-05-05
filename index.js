@@ -15,145 +15,10 @@ const ua = require('ua-parser-js')
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 
-const isLinux = process.platform != 'darwin' && process.platform != 'win32'
-const isMac = process.platform == 'darwin'
-
-let pamAuthenticate, pamErrors
-
-if ( isLinux ) {
-	pamAuthenticate = require('node-linux-pam').pamAuthenticate
-	pamErrors = require('node-linux-pam').pamErrors
-}
-
 const types = require( './src/types.js' )
 const endpointsPre = require( './src/endpoints-pre.js' )
 const endpointsPost = require( './src/endpoints-post.js' )
 
-const usersPath = opts => {
-	return path.resolve(__dirname, './bin/users.json')
-}
-
-const readUsersFile = async opts => {
-	const buff = await fs.readFileSync( usersPath( opts )  )
-	const str = await buff.toString()
-	return JSON.parse( str )
-}
-
-
-function sendError( res, code, message, extra ) {
-	const json = { message, code, status: code, error: true, ...extra }
-	res.status( code ).send( json )
-}
-
-async function isAllowed (req, res, item, endpoints, opts) {
-	
-	const c = '\x1b[93m'
-	const e = '\033[0m'
-
-
-	let user = req.user
-	let isAuth = req.isAuthenticated()
-	if (!opts.silent) console.log(`${c}[api] 👤  ${usersPath()}${e} ---->`, user)
-
-	if (!req.isAuthenticated()) {
-		const users = await readUsersFile( opts )
-		user = users.filter( u => u.username == 'guest' )[0]
-		req.user = user
-		if (user) isAuth = true
-	}
-
-	if (!opts.silent) console.log(`${c}[api] 👤  ${req.method} ${req.user.username} -> ${req.path} ${e}`)
-	if ( user && isAuth ) {
-
-		const method = req.method.toLowerCase()
-
-		let cleanPath = req.path
-		if (cleanPath.substring(0,opts.apiRoot.length) == opts.apiRoot) {
-			cleanPath = cleanPath.substring(opts.apiRoot.length)
-		}
-
-		const whitelist = !user.allows[ method ] ? [] : user.allows[ method ].split(',').map( u => u.trim() ).map( parse )
-		const apilist = endpoints.filter( a => a.type.toLowerCase() == method ).map( a => a.url ).map(parse)
-		const foundA = match(cleanPath, whitelist)
-		const foundB = match(cleanPath, apilist)
-
-		if (foundA.length > 0 && foundB.length > 0) {
-
-			// now we must match against the real endpoints (not shorthand)...
-			
-			const params = exec(cleanPath, foundB)
-			return params
-		}
-	}
-	return false 
-}
-
-
-const passportConfig = {
-	strategy: async (username, password, done) => {
-
-		console.log('[api-auth] ⚡️  logging in with system auth:', username)
-		try {
-			const users = await readUsersFile( opts )
-			const u = users.find( o => o.username == username )
-			if (!u)  {
-				const m = `no user with name "${username}" found`
-				console.log('[api-auth] 👥 🛑  (A) error logging in:', m)
-				return done(null, false, { message: m } )
-			}
-
-			let res = { code: 999, message: `not running pam (linux) or dscl (osx)` }
-			if ( isLinux ) {
-				res = await (new Promise( (resolve, reject) => {
-					console.log(`[api-auth] 👥 ⚡️  authenticatiing "${username}" with pam...`)
-					pamAuthenticate( { username, password }, function(err, code) {
-						const message = Object.keys( pamErrors ).find(key => pamErrors[key] == code)
-						if ( err ) reject({ message, code }) 
-						else resolve({ message, code })
-					})
-				}))
-
-			} else if (isMac) {
-
-				try {
-					res = { code: 0, message: await execSync( `dscl . -authonly ${username} "${password}"`  ) }
-				} catch(err) {
-					res = { code: 403, message: 'incorrect credentials' }
-				}
-
-			}
-
-			if ( res.code != 0 ) {
-				console.log('[api-auth] 👥 🛑  (C) error logging in:', res.message)
-				return done(null, false, res.message )
-			}
-			
-			console.log('[api-auth] 👥 ✅  success logging in:', username)
-			return done(null, u)
-		} catch(err) {
-			console.log('[api-auth] 👥 ❌  (D) error logging in:', err.message)
-			return done( null, false, err.message )
-		}
-
-	},
-	serialize: async (u, done) => {
-		console.log('[api-auth] ⚡️  serializing:', u.username)
-		done(null, u.username)
-	},
-	deserialize: async (username, done) => {
-		try {
-
-			const users = await readUsersFile( opts )
-			const u = users.find( uu => uu.username == username )
-			// console.log('[api-auth] ✅  deserialized:', username)
-			done(null, u)
-		} catch( err ) {
-			console.log('[api-auth] ❌  could not be deserialized:', err.message)
-			done(null, null)
-		}
-		
-	}
-}
 
 module.exports = {
 	types,
@@ -167,8 +32,6 @@ module.exports = {
 
 		const opts = {
 			port: 3000,
-			usersPath: './bin/users.json',
-			logPath: './bin/log.txt',
 			apiRoot: '/api',
 			session: { 
 				secret: SECRET,
@@ -188,7 +51,41 @@ module.exports = {
 			...(_opts||{})
 		}
 
-		const auth = { ...passportConfig, ...(_auth || {}) }
+		console.log(`[ezapi]  using port ${opts.port}`)
+
+		const auth = { 
+			strategy: async ( username, password, done ) => {
+				if ( username == 'admin' && password == process.env.EZAPI_ADMIN_PASSWORD && password != undefined ) {
+					done( null, { username: 'admin' } )
+				} else {
+					done( null, false, 'incorrect password')
+				}
+			},
+			serialize: async (u, done) => {
+				done(null, u.username)
+			},
+			deserialize: async (username, done) => {
+				if (username == 'admin') {
+					done( null, { username: 'admin' } ) 
+				} else {
+					done(null, null)
+				}
+			},
+			permissions: async username => (username == 'admin' ?
+				{
+					get: '/*',
+					post: '/*',
+					put: '/*',
+					delete: '/*'
+				} : {
+					get: '/*',
+					post: '/*',
+					put: '/*',
+					delete: null
+				}
+			),
+			...(_auth || {}) 
+		}
 
 		passport.use('login', new LocalStrategy( auth.strategy ) )
 		passport.serializeUser( auth.serialize )
@@ -203,6 +100,12 @@ module.exports = {
 		]
 
 		if (opts.nocache) app.use(nocache())
+
+
+		const sendError = ( res, code, message, extra ) => {
+			const json = { message, code, status: code, error: true, ...extra }
+			res.status( code ).send( json )
+		}
 
 		endpoints.forEach( item => {
 
@@ -223,15 +126,43 @@ module.exports = {
 
 						// const info = (new ua()).setUA( req.headers['user-agent'] ).getResult()
 
+						// ----------------------------------------
+						// isAllowed ->
+						// ----------------------------------------
 
-						const regex = await isAllowed(req, res, item, endpoints, opts)
+						let regex = null
+						let user = req.isAuthenticated() ? req.user : 'guest'
+						if (!opts.silent) console.log(`[api] 👤  ${req.method} ${user} -> ${req.path}`)
+
+						const method = req.method.toLowerCase()
+
+						let cpath = req.path
+						if (cpath.substring(0,opts.apiRoot.length) == opts.apiRoot) {
+							// clean path
+							cpath = cpath.substring(opts.apiRoot.length)
+						}
+						const permissions = ( await auth.permissions( user ) || {} )[method] || ''
+
+						const whitelist = permissions.split(',').filter( u => u != '').map( u => u.trim() ).map( parse )
+						const apilist = endpoints.filter( a => a.type.toLowerCase() == method ).map( a => a.url ).map(parse) // !
+						const foundA = match(cpath, whitelist) // !
+						const foundB = match(cpath, apilist) // !
+
+						if (foundA.length > 0 && foundB.length > 0) {
+
+							// now we must match against the real endpoints (not shorthand)...
+							
+							regex = exec(cpath, foundB) // !
+						}
+
+						// ----------------------------------------
+						// ----------------------------------------
 
 						if (!regex) {
-							console.log(`[api] 🛑  ${401} "${req?.user?.username}" not authorised: allows="${JSON.stringify(req?.user?.allows) || '~'}" -> ${item.type} ${item.url}` )
+							console.log(`[api] 🛑  ${401} "${user}" not authorised with "${JSON.stringify(permissions)}"` )
 							return sendError( res, 401, 'not authorised')
 						}
 
-						const user = {}
 						const args = ( item.type.toLowerCase() == 'get' ) ? req.query : req.body
 
 						// check schema
@@ -298,32 +229,6 @@ module.exports = {
 
 		const server = app.listen( opts.port , async () => {
 
-			const template = [
-			    {
-					"username": "guest",
-					"allows": {
-						"get": "/*",
-						"post": "/*",
-						"put": "/*",
-						"delete": "/*"
-					}
-			    }
-			]
-
-			const dir = path.join( __dirname, './bin' )
-			const dest = usersPath( opts)
-
-
-			try {
-				if (!fs.existsSync(dir))  fs.mkdirSync(dir)
-				const exists = await fs.existsSync( dest )
-				if (!exists) {
-					await fs.writeFileSync( dest, JSON.stringify( template, null, 2 ) )
-					console.log(`[api] ✅  success creating -> ${dest}` )
-				}
-			} catch(err) {
-				console.log(`[api] ❌  error creating -> ${dest}: "${err.message}"` )
-			}
 			const port = server.address().port
 			console.log(`[api] ✨  server running on port: ${port}`)
 		})

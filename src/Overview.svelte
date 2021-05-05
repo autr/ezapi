@@ -115,15 +115,15 @@
 
 <svelte:window on:hashchange={onHashChange} />
 
-<main>
-	<div class="flex">
-		<div class="flex column no-basis br1-solid grow h100vh overflow-auto">
+<main class="flex column-stretch-stretch h100vh">
+	<div class="flex grow">
+		<div class="flex column no-basis br1-solid grow overflow-auto">
 			<div class="p1">
 				<h4 class="bold">Endpoints</h4>
 			</div>
 			<Table {init} {callbacks} {dimensions} />
 		</div>
-		<div class="flex column no-basis br1-solid grow h100vh overflow-auto">
+		<div class="flex column no-basis br1-solid grow overflow-auto">
 
 			{#if endpoint}
 				<form class="flex column cmb1 p1">
@@ -193,7 +193,7 @@
 				<div>No endpoint current.</div>
 			{/if}
 		</div>
-		<div class="flex flex-column grow no-basis h100vh">
+		<div class="flex flex-column grow no-basis">
 
 
 
@@ -223,5 +223,10 @@
 			</div>
 
 		</div>
+	</div>
+	<div class="flex p1 bt1-solid">
+		<input type="text" placeholder="username" />
+		<input type="password" placeholder="password" />
+		<button>login</button>
 	</div>
 </main>

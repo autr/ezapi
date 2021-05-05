@@ -1,6 +1,6 @@
 {
   "name": "ez-ezapi",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "app.js",
   "author": "G.Sinnott",
   "license": "MIT",
@@ -59,7 +59,7 @@
     "graceful-fs": "^4.2.4"
   },
   "scripts": {
-    "start": "node dev.js",
+    "start": "nodemon dev.js",
     "build": "rollup -c",
     "dev": "rollup -c -w & node-sass src/global.sass assets/global.css -w"
   },

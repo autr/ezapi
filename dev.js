@@ -28,7 +28,7 @@ return eazapi.app( [
 	},
 	{
 		url: '/example_post',
-		type: 'get',
+		type: 'post',
 		description: 'example get',
 		category: CAT_EXAMPLE,
 		schema: {

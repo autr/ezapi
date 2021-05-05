@@ -8,3 +8,4 @@ yarn.lock
 db/*
 bin/*
 pnpm-lock.yaml
+.env

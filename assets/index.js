@@ -4843,7 +4843,7 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			div.textContent = "No endpoint current.";
-    			add_location(div, file, 192, 4, 4842);
+    			add_location(div, file, 192, 4, 4876);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -4936,21 +4936,21 @@ var app = (function () {
     			button = element("button");
     			t10 = text("Send");
     			attr_dev(h40, "class", "bold");
-    			add_location(h40, file, 129, 5, 3208);
+    			add_location(h40, file, 129, 5, 3242);
     			attr_dev(form, "class", "flex column cmb1 p1");
-    			add_location(form, file, 128, 4, 3168);
+    			add_location(form, file, 128, 4, 3202);
     			attr_dev(h41, "class", "bold");
-    			add_location(h41, file, 168, 5, 4300);
-    			add_location(p, file, 169, 5, 4336);
+    			add_location(h41, file, 168, 5, 4334);
+    			add_location(p, file, 169, 5, 4370);
     			attr_dev(input, "type", "text");
     			input.disabled = true;
     			input.value = /*path*/ ctx[8];
-    			add_location(input, file, 183, 5, 4652);
+    			add_location(input, file, 183, 5, 4686);
     			attr_dev(button, "class", "filled");
     			button.disabled = /*waiting*/ ctx[5];
-    			add_location(button, file, 184, 5, 4708);
+    			add_location(button, file, 184, 5, 4742);
     			attr_dev(div, "class", "flex column cmb1 p1 bt1-solid");
-    			add_location(div, file, 167, 4, 4251);
+    			add_location(div, file, 167, 4, 4285);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, form, anchor);
@@ -5090,7 +5090,7 @@ var app = (function () {
     			div = element("div");
     			div.textContent = "N/A";
     			attr_dev(div, "class", "fade");
-    			add_location(div, file, 131, 6, 3299);
+    			add_location(div, file, 131, 6, 3333);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -5131,7 +5131,7 @@ var app = (function () {
     			attr_dev(input, "class", "flex grow p0-6");
     			input.required = input_required_value = /*value*/ ctx[28].required;
     			attr_dev(input, "placeholder", input_placeholder_value = /*key*/ ctx[27]);
-    			add_location(input, file, 156, 7, 4044);
+    			add_location(input, file, 156, 7, 4078);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, input, anchor);
@@ -5200,7 +5200,7 @@ var app = (function () {
     			attr_dev(textarea, "rows", "6");
     			textarea.required = textarea_required_value = /*value*/ ctx[28].required;
     			attr_dev(textarea, "placeholder", textarea_placeholder_value = /*key*/ ctx[27]);
-    			add_location(textarea, file, 148, 7, 3828);
+    			add_location(textarea, file, 148, 7, 3862);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, textarea, anchor);
@@ -5268,7 +5268,7 @@ var app = (function () {
     			attr_dev(input, "type", "checkbox");
     			attr_dev(input, "placeholder", input_placeholder_value = /*key*/ ctx[27]);
     			input.required = input_required_value = /*value*/ ctx[28].required;
-    			add_location(input, file, 141, 7, 3599);
+    			add_location(input, file, 141, 7, 3633);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, input, anchor);
@@ -5353,9 +5353,9 @@ var app = (function () {
     			if_block.c();
     			if_block_anchor = empty();
     			attr_dev(span, "class", "fade normal monospace");
-    			add_location(span, file, 138, 7, 3487);
+    			add_location(span, file, 138, 7, 3521);
     			attr_dev(div, "class", "bold");
-    			add_location(div, file, 136, 6, 3420);
+    			add_location(div, file, 136, 6, 3454);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -5428,11 +5428,11 @@ var app = (function () {
     			t1 = space();
     			input = element("input");
     			attr_dev(div, "class", "bold");
-    			add_location(div, file, 173, 7, 4434);
+    			add_location(div, file, 173, 7, 4468);
     			attr_dev(input, "name", input_name_value = /*piece*/ ctx[24].val);
     			attr_dev(input, "type", "text");
     			attr_dev(input, "placeholder", input_placeholder_value = /*piece*/ ctx[24].val);
-    			add_location(input, file, 176, 7, 4494);
+    			add_location(input, file, 176, 7, 4528);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -5536,7 +5536,7 @@ var app = (function () {
     			span = element("span");
     			span.textContent = "N/A";
     			attr_dev(span, "class", "fade");
-    			add_location(span, file, 210, 6, 5260);
+    			add_location(span, file, 210, 6, 5287);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -5579,11 +5579,11 @@ var app = (function () {
     			a = element("a");
     			t4 = text(/*hash*/ ctx[1]);
     			attr_dev(span, "class", "bold");
-    			add_location(span, file, 203, 6, 5059);
+    			add_location(span, file, 203, 6, 5086);
     			attr_dev(a, "target", "_blank");
     			attr_dev(a, "href", /*hash*/ ctx[1]);
     			attr_dev(a, "class", "bb1-solid inline-block");
-    			add_location(a, file, 205, 11, 5139);
+    			add_location(a, file, 205, 11, 5166);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -5648,6 +5648,13 @@ var app = (function () {
     	let raw_value = (/*waiting*/ ctx[5]
     	? `<span class="fade">waiting...</span>`
     	: /*str*/ ctx[9]) + "";
+    	let t9;
+    	let div7;
+    	let input0;
+    	let t10;
+    	let input1;
+    	let t11;
+    	let button;
     	let current;
     	let mounted;
     	let dispose;
@@ -5704,22 +5711,30 @@ var app = (function () {
     			h42.textContent = "Data";
     			t8 = space();
     			pre = element("pre");
+    			t9 = space();
+    			div7 = element("div");
+    			input0 = element("input");
+    			t10 = space();
+    			input1 = element("input");
+    			t11 = space();
+    			button = element("button");
+    			button.textContent = "login";
     			attr_dev(h40, "class", "bold");
-    			add_location(h40, file, 121, 4, 2976);
+    			add_location(h40, file, 121, 4, 3017);
     			attr_dev(div0, "class", "p1");
-    			add_location(div0, file, 120, 3, 2955);
-    			attr_dev(div1, "class", "flex column no-basis br1-solid grow h100vh overflow-auto");
-    			add_location(div1, file, 119, 2, 2881);
-    			attr_dev(div2, "class", "flex column no-basis br1-solid grow h100vh overflow-auto");
-    			add_location(div2, file, 125, 2, 3074);
+    			add_location(div0, file, 120, 3, 2996);
+    			attr_dev(div1, "class", "flex column no-basis br1-solid grow overflow-auto");
+    			add_location(div1, file, 119, 2, 2929);
+    			attr_dev(div2, "class", "flex column no-basis br1-solid grow overflow-auto");
+    			add_location(div2, file, 125, 2, 3115);
     			attr_dev(h41, "class", "bold");
-    			add_location(h41, file, 200, 4, 4973);
+    			add_location(h41, file, 200, 4, 5000);
     			attr_dev(p, "class", "mtb1");
-    			add_location(p, file, 201, 4, 5008);
+    			add_location(p, file, 201, 4, 5035);
     			attr_dev(div3, "class", "p1");
-    			add_location(div3, file, 199, 3, 4952);
+    			add_location(div3, file, 199, 3, 4979);
     			attr_dev(h42, "class", "bold");
-    			add_location(h42, file, 215, 4, 5368);
+    			add_location(h42, file, 215, 4, 5395);
     			attr_dev(pre, "class", "pre mtb1 monospace");
 
     			attr_dev(pre, "style", `
@@ -5727,13 +5742,23 @@ var app = (function () {
 					word-break:break-word;
 				`);
 
-    			add_location(pre, file, 216, 4, 5399);
+    			add_location(pre, file, 216, 4, 5426);
     			attr_dev(div4, "class", "p1 bt1-solid overflow-auto");
-    			add_location(div4, file, 214, 3, 5323);
-    			attr_dev(div5, "class", "flex flex-column grow no-basis h100vh");
-    			add_location(div5, file, 195, 2, 4894);
-    			attr_dev(div6, "class", "flex");
-    			add_location(div6, file, 118, 1, 2860);
+    			add_location(div4, file, 214, 3, 5350);
+    			attr_dev(div5, "class", "flex flex-column grow no-basis");
+    			add_location(div5, file, 195, 2, 4928);
+    			attr_dev(div6, "class", "flex grow");
+    			add_location(div6, file, 118, 1, 2903);
+    			attr_dev(input0, "type", "text");
+    			attr_dev(input0, "placeholder", "username");
+    			add_location(input0, file, 227, 2, 5671);
+    			attr_dev(input1, "type", "password");
+    			attr_dev(input1, "placeholder", "password");
+    			add_location(input1, file, 228, 2, 5718);
+    			add_location(button, file, 229, 2, 5769);
+    			attr_dev(div7, "class", "flex p1 bt1-solid");
+    			add_location(div7, file, 226, 1, 5637);
+    			attr_dev(main, "class", "flex column-stretch-stretch h100vh");
     			add_location(main, file, 117, 0, 2852);
     		},
     		l: function claim(nodes) {
@@ -5763,6 +5788,13 @@ var app = (function () {
     			append_dev(div4, t8);
     			append_dev(div4, pre);
     			pre.innerHTML = raw_value;
+    			append_dev(main, t9);
+    			append_dev(main, div7);
+    			append_dev(div7, input0);
+    			append_dev(div7, t10);
+    			append_dev(div7, input1);
+    			append_dev(div7, t11);
+    			append_dev(div7, button);
     			current = true;
 
     			if (!mounted) {
