@@ -113,23 +113,5 @@ module.exports = (opts, endpoints) => [
 
 			res.send( req.user )
 		}
-	},
-	{
-		url: '/check_auth',
-		type: 'get',
-		description: 'check permissions for endpoint',
-		category: types.CAT_AUTH,
-		schema: {
-			path: {
-				type: 'string',
-				required: true
-			}
-		},
-		emoji: '🔒',
-		data: async e => null,
-		next: async (req, res, data) => {
-
-			res.send( req.user )
-		}
 	}
 ]

@@ -41,7 +41,8 @@ const readUsersFile = async opts => {
 
 
 function sendError( res, code, message, extra ) {
-	res.status( code ).send( { message, code, status: code, error: true, ...extra } )
+	const json = { message, code, status: code, error: true, ...extra }
+	res.status( code ).send( json )
 }
 
 async function isAllowed (req, res, item, endpoints, opts) {
@@ -254,7 +255,19 @@ module.exports = {
 
 						// process data
 
-						const data = (item.data) ? await item.data( { ...args, regex }, { user, opts, req } ) : {}
+						// ----------------------------------------------
+
+						let data = {}
+						if (item.data) data = await item.data({
+							...args, 
+							regex 
+						}, { 
+							user, 
+							opts, 
+							req 
+						})
+
+						// ----------------------------------------------
 
 						// perform res and req
 
@@ -266,6 +279,7 @@ module.exports = {
 						const c = colors[req.method.toLowerCase()]
 						const e = '\033[0m'
 						if (!opts.silent) console.log(`${c}[api] ✅  ${req.method} ${req.path} -> success! ${e}`)
+
 						const send = item.next || ( (req, res, data) => res.send( data ) )
 						return send( req, res, data )
 						
@@ -274,7 +288,6 @@ module.exports = {
 						let code = 500
 						if (err.code == 'ENOENT') code = 404
 						console.log(`[api] 🛑  ${code} ${req.method} ${req.path}`, err.message || err, err.stack || err )
-						// inform( req.path, types.API_ERR, err.message || err )
 						return sendError( res, 500, err.message || err )
 						
 					}

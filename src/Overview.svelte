@@ -1,169 +1,225 @@
 <script>
 	import { onMount } from 'svelte';
-	// import { post, get } from '../util.js'
+	import fetcher from 'fetcher'
+	import { Table } from 'svelte-tabular-table'
+	import { parse } from 'matchit'
 
-	let categories = []
 	let endpoints = []
-	let keyed = {}
 
 	onMount(async () => {
 		const res = await fetch(`endpoints`)
-		const json = await res.json()
-		json.forEach( e => {
-			const k = e.category
-			let idx = categories.indexOf(k)
-			if (idx == -1) {
-				categories.push( k )
-				endpoints.push( [] )
-			}
-			idx = categories.indexOf(k)
-			endpoints[idx].push( e )
-			keyed[ e.type + e.url + e.description ] = e
-		})
-		endpoints = endpoints.reverse().reverse()
+		const types = ['get', 'post', 'put', 'delete']
+		endpoints = (await res.json()).filter( e => types.indexOf(e.type) != -1 )
 	})
 
 
-	let _current
-	$: current = keyed[_current]
-	let values = {}
-	function setParams() {
-		if (!current) return (params = '')
-		params = '?'
-		const keys = Object.keys(current.schema)
-		for (let i = 0; i < keys.length; i++) {
-			const  k = keys[i]
-			if (values[k]) params += `${ i == 0 ? '' : '&' }${k}=${values[k]}`
+
+	$: init = {
+		data: endpoints,
+		keys: ['category', 'type', 'url','description'],
+		index: 'url'
+	}
+
+	let dimensions = {
+		padding: 0.1,
+		widths: [100,60, 200]
+	}
+
+	let callbacks = {
+		render: {
+			cell: o => {
+				let fill = `p1 unclickable flex row-flex-start-center`
+				if (o.item.url == hash) fill += ' filled'
+				if (o.key == 'url') return `
+					<a class="${fill}" href="${o.value}" target="_blank">
+						<span class="bb1-solid">${o.value}</span>
+					</a>
+				`
+				return `
+					<a class="${fill}" href="#${o.item.url}">${o.value}</a>
+				`
+			},
+			key: o => {
+				return `
+					<span class="p1 block bold">${o.value}</span>
+				`
+			}
 		}
 	}
-	let params = ''
-	let permissions = false
 
-	let formEl
-
-
-	let response
+	let timestamp, timer, status
 	let waiting = false
+	let values = {}
+	let hash, data = ''
+	let components = []
+	onHashChange()
 
-	async function send( e ) {
-		// e.preventDefault()
-		// e.stopPropagation()
-		// response = ''
-	 //    const form = new FormData(formEl)
-		// const args = Object.fromEntries(form.entries())
-		// waiting = true
-		// if (current.type == 'get') response = await (await get( current.url, args )).json()
-		// if (current.type == 'post') response = await (await post( current.url, args )).json()
-		// waiting = false
+	function onHashChange() {
+		hash = window.location.hash.substring(1)
+		if (!values[hash]) values[hash] = {}
+		for (let i = 0; i < endpoints.length; i++) endpoints[i].selected = (endpoints[i]?.item?.url == hash)
+		status = null
+		waiting = false
+		data = ''
+		components = parse( hash )
 	}
 
-	$: responseStr = ( typeof(response) == 'object' || typeof(response) == 'array' ) ? JSON.stringify(response, null, 2) : response
+	$: endpoint = endpoints.find( e => e.url == hash && hash != '' )
+
+
+	function path_( url, args ) {
+		if (args == undefined) return url
+		const keys = Object.keys( args )
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]
+			if (i == 0) url += '?'
+			if ( args[key] != undefined && args[key] != '' ) {
+				url += `${key}=${encodeURIComponent(args[key])}`
+				if (i != keys.length - 1) url += '&'
+			}
+		}
+		return url
+	}
+	$: args = values[hash]
+	$: regexed = '/' + components.map( c => c.value || c.val).join('/')
+	$: path = path_( regexed, args)
+
+	async function submit() {
+
+		let copy = JSON.parse( JSON.stringify(args) )
+		Object.keys( copy ).forEach( k => {
+			const sch = endpoint.schema[ k ]
+			if (sch.type == 'object' || sch.type == 'array') {
+				try {
+					copy[k] = eval( '(' + copy[k] + ')' )
+					console.log(`[Overview]  parsed object / array ${k}:`, copy[k])
+				} catch( err ) {
+					console.warn(`[Overview]  couldn't parse ${k}:`, err.message, copy[k])
+					copy[k] = null
+				}
+			}
+		})
+		timestamp = new Date()
+		data = ''
+		waiting = true
+		const res = await fetcher[endpoint.type]( regexed, copy, false )
+		status = res.status || res.code
+		if (res.ok) data = res.data
+		if (res.error) data = res.message
+		waiting = false
+		timer = ( new Date() - timestamp ) / 1000
+	}
+
+	$: str = JSON.stringify(data, null, 2)
 </script>
 
+<svelte:window on:hashchange={onHashChange} />
+
 <main>
-	<div class="flex h100vh no-basis">
-		<div class="flex flex-column grow br1-solid no-basis">
+	<div class="flex">
+		<div class="flex column no-basis br1-solid grow h100vh overflow-auto">
+			<div class="p1">
+				<h4 class="bold">Endpoints</h4>
+			</div>
+			<Table {init} {callbacks} {dimensions} />
+		</div>
+		<div class="flex column no-basis br1-solid grow h100vh overflow-auto">
 
-			<div class="ptb1 overflow-auto bb1-solid">
-
-				<div class="flex plr2 ptb0-4 align-items-flex-end justify-content-between">
-					<div class="f3">API</div>
-					<button 
-						class:filled={permissions}
-						on:click={e => permissions = !permissions}>
-						Permissions
-					</button>
-				</div>
-				{#each endpoints as ee, i}
-					<div class="plr2 ptb0-4"><span class="f3">{categories[i]}</span></div>
-					{#each ee as e, ii}
-						{#if e.type != 'use'  }
-							<div 
-								on:click={ a => (_current = e.type + e.url + e.description) && (response = '') }
-								class:pop={ _current == e.type + e.url + e.description }
-								class="flex justify-content-between plr2 ptb0-4 pointer align-items-center">
-								<div class="flex align-items-center">
-									<div 
-										class:error={e.type == 'delete'}
-										class:success={e.type == 'post'}
-										class:info={e.type == 'get'}
-										class="f1 w60px inline-block">
-										{e.type.toUpperCase()}
-									</div> 
-									{#if e.type =='get'}
-										<a
-											href={e.url}
-											target="_blank"
-											class="sink highlight plr0-8 ptb0-4">{e.url}</a>
-									{:else}
-										<div class="sink highlight plr0-8 ptb0-4">{e.url}</div>
-									{/if} 
-									{#each Object.entries(e.schema || {}) as [key, value]}
-										<div class="pop plr0-8 ptb0-4 fade">{key}</div>
-									{/each}
-								</div>
-								<div>	
-									{e.description}
-								</div>
-							</div>
+			{#if endpoint}
+				<form class="flex column cmb1 p1">
+					<h4 class="bold">Arguments</h4>
+					{#if Object.keys(endpoint.schema).length == 0 }
+						<div class="fade">
+							N/A
+						</div>
+					{/if}
+					{#each Object.entries(endpoint.schema) as [key, value]}
+						<div class="bold">
+							{key} {value.required ? '*' : ''}
+							<span class="fade normal monospace">{value.type}</span>
+						</div>
+						{#if value.type == 'boolean'}
+							<input 
+								bind:value={ values[hash][key] }
+								name={key}
+								type="checkbox" 
+								placeholder={key}
+								required={value.required} />
+						{:else if value.type == 'object' || value.type == 'array' }
+							<textarea 
+								bind:value={ values[hash][key] }
+								name={key}
+								class="monospace flex grow p0-6" 
+								rows={'6'}
+								required={value.required}
+								placeholder={key} />
+						{:else}
+							<input 
+								bind:value={ values[hash][key] }
+								name={key}
+								class="flex grow p0-6" 
+								required={value.required} 
+								placeholder={key} />
 						{/if}
 					{/each}
-				{/each}
-			</div>
-		</div>
-		<div class="flex flex-column grow no-basis">
+				</form>
 
 
-			<div class="ptb1 basis-auto bb1-solid" style="flex-basis: auto">
-				<div class="plr2 ptb0-4"><span class="f3">Endpoint</span></div>
-				<div class="p2">
-					{#if current}
-						<form bind:this={formEl}>
-							{#each Object.entries(current.schema || {}) as [key, value]}
-								<div class="flex align-items-center pb0-8">
-									<div class="basis80px">{key}{value.required ? '*' : ''}</div>
-									{#if value.type == 'boolean'}
-										<input 
-											name={key}
-											type="checkbox" 
-											required={value.required} 
-											bind:value={ values[key] } />
-									{:else if value.type == 'object' || value.type == 'array' }
-										<textarea 
-											name={key}
-											class="flex grow p0-6" 
-											rows={'6'}
-											required={value.required} 
-											bind:value={ values[key] } 
-											on:keyup={setParams} 
-											placeholder={value.desc} />
-									{:else}
-										<input 
-											name={key}
-											class="flex grow p0-6" 
-											required={value.required} 
-											bind:value={ values[key] } 
-											on:keyup={setParams} 
-											placeholder={value.desc} />
-									{/if}
-								</div>
-							{/each}
-							<div class="flex align-items-flex-end justify-content-between">
-								<div class="f3">
-									{current.url}{#if current.type == 'get'}<span>{params}</span>{/if}
-								</div>
-								<button disabled={waiting} class="ptb0-4 plr1" on:click={send}>{(waiting) ? 'waiting' : current.type.toUpperCase()}</button>
+				<div class="flex column cmb1 p1 bt1-solid">
+					<h4 class="bold">Endpoint</h4>
+					<p>{endpoint.description}</p>
+
+					{#each components as piece}
+						{#if piece.type > 0}
+							<div class="bold">
+								{piece.val}
 							</div>
-						</form>
-					{:else}
-						<div>No endpoint current.</div>
-					{/if}
+							<input 
+								bind:value={ piece.value }
+								name={ piece.val }
+								type="text" 
+								placeholder={ piece.val } />
+						{/if}
+					{/each}
+					<input type="text" disabled={true} value={path} />
+					<button 
+						class="filled"
+						disabled={waiting} 
+						on:click={submit}>
+						Send	
+					</button>
 				</div>
-			</div>
+			{:else}
+				<div>No endpoint current.</div>
+			{/if}
+		</div>
+		<div class="flex flex-column grow no-basis h100vh">
 
-			<div class="ptb1 grow overflow-auto">
-				<div class="plr2 ptb0-4"><span class="f3">Response</span></div>
-				<div class="p2" style="font-family:monospace;white-space:pre-wrap">{@html (waiting) ? 'waiting' : responseStr || '~' }</div>
+
+
+			<div class="p1">
+				<h4 class="bold">Response</h4>
+				<p class="mtb1">
+					{#if timer && status }
+						<span class="bold">{ status }</span>
+						in { timer.toFixed(2) }s 
+						from <a 
+								target="_blank"
+								href={ hash }
+								class="bb1-solid inline-block">{ hash }</a>
+					{:else}
+						<span class="fade">N/A</span>
+					{/if}
+				</p>
+			</div>
+			<div class="p1 bt1-solid overflow-auto">
+				<h4 class="bold">Data</h4>
+				<pre class="pre mtb1 monospace" style={`
+					white-space:normal;
+					word-break:break-word;
+				`}>
+					{@html waiting ? `<span class="fade">waiting...</span>` : str }
+				</pre>
 			</div>
 
 		</div>
