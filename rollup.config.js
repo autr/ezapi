@@ -1,3 +1,6 @@
+import dotenv from 'dotenv'
+dotenv.config()
+
 import svelte from 'rollup-plugin-svelte';
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
@@ -59,7 +62,7 @@ export default {
 		}),
 		commonjs(),
 		!production && serve(),
-		!production && livereload('assets'),
+		// !production && livereload('assets'),
 		production && terser()
 	],
 	watch: {

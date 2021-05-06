@@ -1,5 +1,6 @@
 
 const fs = require('fs')
+const crypto = require('crypto')
 const path = require('path')
 const os = require('os')
 const { spawn, execSync, spawnSync } = require('child_process')
@@ -55,23 +56,31 @@ module.exports = {
 
 		const auth = { 
 			strategy: async ( username, password, done ) => {
-				if ( username == 'admin' && password == process.env.EZAPI_ADMIN_PASSWORD && password != undefined ) {
+				console.log(`[ezapi]  strategy ${username} p**sw**d`)
+
+				const token = await crypto.scryptSync( password, process.env.EZAPI_KEY, 64).toString('hex')
+				const hasAdmin = username == 'admin' || ( username == process.env.EZAPI_ADMIN && username )
+				const hasPassword = (token == process.env.EZAPI_PASSWORD) && password
+
+				if ( hasAdmin && hasPassword ) {
 					done( null, { username: 'admin' } )
 				} else {
 					done( null, false, 'incorrect password')
 				}
 			},
 			serialize: async (u, done) => {
+				console.log(`[ezapi]  deserialise ${u?.username}`)
 				done(null, u.username)
 			},
 			deserialize: async (username, done) => {
+				console.log(`[ezapi]  deserialise ${username}`)
 				if (username == 'admin') {
 					done( null, { username: 'admin' } ) 
 				} else {
 					done(null, null)
 				}
 			},
-			permissions: async username => (username == 'admin' ?
+			permissions: async user => (user?.username == 'admin' ?
 				{
 					get: '/*',
 					post: '/*',
@@ -79,8 +88,8 @@ module.exports = {
 					delete: '/*'
 				} : {
 					get: '/*',
-					post: '/*',
-					put: '/*',
+					post: '/login',
+					put: null,
 					delete: null
 				}
 			),
@@ -159,11 +168,15 @@ module.exports = {
 						// ----------------------------------------
 
 						if (!regex) {
-							console.log(`[api] 🛑  ${401} "${user}" ${cpath} not authorised with ${JSON.stringify(permissions)}` )
+							console.log(`[api] 🛑  ${401} ${req.isAuthenticated()} "${user.username}" ${cpath} not authorised with ${JSON.stringify(permissions)}` )
 							return sendError( res, 401, 'not authorised')
 						}
 
 						const args = ( item.type.toLowerCase() == 'get' ) ? req.query : req.body
+
+						if ( args?.ezapi_permissions ) {
+							return res.send( 'permitted' )
+						}
 
 						// check schema
 

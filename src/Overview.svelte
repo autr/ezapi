@@ -3,56 +3,55 @@
 	import fetcher from 'fetcheriser'
 	import { Table } from 'svelte-tabular-table'
 	import { parse } from 'matchit'
+	import svg from './svg.js'
 
 	let endpoints = []
-
-	onMount(async () => {
-		const res = await fetch(`endpoints`)
-		const types = ['get', 'post', 'put', 'delete']
-		endpoints = (await res.json()).filter( e => types.indexOf(e.type) != -1 )
-	})
 
 
 
 	$: init = {
 		data: endpoints,
-		keys: ['category', 'type', 'url','description'],
+		keys: ['url','category', 'type', 'permissions', 'description'],
 		index: 'url'
 	}
 
 	let dimensions = {
-		padding: 0.1,
-		widths: [100,60, 200]
+		padding: 13,
+		widths: [280,120,80,110],
+		minwidth: 800
+	}
+
+	let features = {
+		sortable: {
+			key: 'category'
+		}
+	}
+
+	$: classes = {
+		filled: [ hash ]
 	}
 
 	let callbacks = {
 		render: {
 			cell: o => {
-				let fill = `p1 unclickable flex row-flex-start-center`
-				if (o.item.url == hash) fill += ' filled'
-				if (o.key == 'url') return `
-					<a class="${fill}" href="${o.value}" target="_blank">
-						<span class="bb1-solid">${o.value}</span>
+				const URL = o.key == 'url'
+				const PERM = o.key == 'permissions'
+				const v = PERM ? `<span class="${o.value ? 'cross' : ''} w1em h1em block" />` : o.value
+				return `
+					<a 
+						class="unclickable fill"
+						${URL ? 'target="_blank"' : ''}
+						href="${URL ? o.value : '#'+o.item.url}">
 					</a>
-				`
-				return `
-					<a class="${fill}" href="#${o.item.url}">${o.value}</a>
-				`
-			},
-			key: o => {
-				return `
-					<span class="p1 block bold">${o.value}</span>
+					<span class="
+						${URL ? 'bb1-solid' : ''}
+					">${v}</span>
 				`
 			}
 		}
 	}
 
-	let timestamp, timer, status
-	let waiting = false
-	let values = {}
-	let hash, data = ''
-	let components = []
-	onHashChange()
+
 
 	function onHashChange() {
 		hash = window.location.hash.substring(1)
@@ -61,8 +60,33 @@
 		status = null
 		waiting = false
 		data = ''
-		components = parse( hash )
+		if (!components[hash]) components[hash] = parse( hash )
+		whoami()
 	}
+
+	async function getPermissions() {
+
+		for(let i = 0; i < endpoints.length; i++) {
+			let e = endpoints[i]
+			const res = await fetcher[e.type.toLowerCase()]( e.url, { ezapi_permissions: true  } )
+			endpoints[i].permissions = res.ok || false
+		}
+	}
+
+	onMount(async () => {
+		const res = await fetch(`endpoints`)
+		const types = ['get', 'post', 'put', 'delete']
+		endpoints = (await res.json()).filter( e => types.indexOf(e.type) != -1 )
+		setTimeout( e => {
+			onHashChange()
+			history = JSON.parse( window.localStorage.getItem( storage ) ) || []
+			// history.forEach( h => console.log('LOAD', h.data) )
+		}, 10)
+
+		await getPermissions()
+
+	})
+
 
 	$: endpoint = endpoints.find( e => e.url == hash && hash != '' )
 
@@ -81,8 +105,20 @@
 		return url
 	}
 	$: args = values[hash]
-	$: regexed = '/' + components.map( c => c.value || c.val).join('/')
+	$: regexed = '/' + ( components[hash] || [] ).map( c => c.value || c.val).join('/')
 	$: path = path_( regexed, args)
+
+	async function whoami() {
+		who = (await fetcher.get( '/api/whoami' )).data
+	}
+
+	let timestamp
+	let waiting = false
+	let who = ''
+
+	let history = []
+
+
 
 	async function submit() {
 
@@ -104,30 +140,185 @@
 		waiting = true
 		const res = await fetcher[endpoint.type]( regexed, copy, false )
 		status = res.status || res.code
-		if (res.ok) data = res.data
-		if (res.error) data = res.message
-		waiting = false
 		timer = ( new Date() - timestamp ) / 1000
+		if (res.ok) {
+			data = res.data
+			let copy = history
+			const entry = {
+				...JSON.parse( JSON.stringify( saveable ) ),
+				data: JSON.stringify( data ),
+				status,
+				timer: timer.toFixed(2),
+				id: new Date() / 1000,
+				timestamp: (new Date()).toISOString().substr(11, 8)
+			}
+			console.log('[Overview]  adding entry', entry.values)
+			copy.push( entry )
+			history = copy
+
+			// history.forEach( h => console.log('SAVE', h.data) )
+			window.localStorage.setItem( storage, JSON.stringify( history ) )
+			index = 0
+
+		}
+		if (res.error) data = res.message
+		setTimeout( e => waiting = false, 10)
+	}
+	let creds = {
+		username: '',
+		password: ''
+	}
+	let loginError = ''
+	$: storage = window.location.host + window.location.pathname
+	async function login( e ) {
+		loginError = ''
+		e.preventDefault()
+		e.stopPropagation()
+		const res = await fetcher.post( '/api/login', creds )
+		if (res.ok) {
+			await whoami()
+			await getPermissions()
+		} else {
+			loginError = res?.message || res
+		}
+	}
+	async function logout( e ) {
+		e.preventDefault()
+		e.stopPropagation()
 	}
 
-	$: str = JSON.stringify(data, null, 2)
+	$: str = JSON.stringify(data, null, '\t')
+		
+
+
+
+	$: historyInit = {
+		data: history.reverse() || [],
+		keys: ['url', 'status', 'timer', 'timestamp'],
+		index: 'id'
+	}
+
+	$: historyClasses = {
+		filled: [ history[index]?.id ]
+	}
+
+	let historyDimensions = {
+		padding: 13,
+		widths: [null, 70, 60, 100]
+	}
+
+	let historyFeatures = {
+	}
+
+	let historyCallbacks = {
+		click: {
+			cell: o => {
+				index = o.rowIndex
+				const entry = history[index]
+				const url = history[index].url
+				components[url] = JSON.parse( JSON.stringify( entry.components ))
+				values[url] = JSON.parse( JSON.stringify( entry.values ))
+				data = JSON.parse( entry.data )
+			}
+		}
+	}
+
+
+	// ----------------
+
+	let hash, status, timer // store
+	let data = '' // store
+	let values = {} // store
+	let components = {} // store
+
+	$: saveable = { url: hash, values: values[hash], components: components[hash] }
+	
+	// ----------------
+
+	let index = -1
+
+	function clear() {
+		history = []
+		window.localStorage.setItem( storage, null )
+
+	}
+
+	async function copy() {
+
+		if (!navigator.clipboard) return
+		await navigator.clipboard.writeText( str )
+	}
+
+	function compare( able, entry ) {
+		if (!entry || !able) return
+		const a = JSON.stringify( { url: entry.url, values: entry.values, components: entry.components } )
+		const b = JSON.stringify( { url: able.url, values: able.values, components: able.components } )
+		if (a != b) {
+			const copy = history
+			history = []
+			index = -1
+			history = copy
+		}
+	}
+
+	$: compare( saveable, history[index] )
+
 </script>
 
 <svelte:window on:hashchange={onHashChange} />
 
-<main class="flex column-stretch-stretch h100vh">
-	<div class="flex grow">
-		<div class="flex column no-basis br1-solid grow overflow-auto">
+<main class="flex column-stretch-stretch h100vh overflow-hidden">
+	<div class="flex grow h100pc">
+		<div class="flex column basis10pc br1-solid grow overflow-hidden h100vh">
 			<div class="p1">
-				<h4 class="bold">Endpoints</h4>
+				<h4 class="bold flex">
+					<span class="bb2-solid block">Application Programming Interface</span>
+				</h4>
 			</div>
-			<Table {init} {callbacks} {dimensions} />
+			<div class="overflow-auto h100pc">
+				<Table {init} {classes} {features} {callbacks} {dimensions} />
+			</div>
+
+			<div class="p1 bt1-solid flex column cmb1">
+				<h4 class="flex bold">
+					<span class="bb2-solid block">Auth</span>
+				</h4>
+				<div class="flex row-space-between-center">
+					<div>
+						<span>Viewing as </span>
+						<span class="bb1-solid inline-block bold">{who.username || ''}</span>
+					</div>
+					<div>
+						{loginError} 
+					</div>
+				</div>
+				<form 
+					method="post" 
+					action="/api/login" 
+					class:none={ who.loggedin }
+					class="flex row">
+					<input name="username" class="grow mr1" bind:value={creds.username} type="text" placeholder="username" />
+					<input name="password" class="grow mr1" bind:value={creds.password} type="password" placeholder="password" />
+					<button class="filled " on:click={login} >login</button>
+				</form>
+				<div
+					class:none={ !who.loggedin }
+					class="grow basis0em h100pc flex row-flex-start-stretch cmr1">
+					<button class="filled" on:click={logout} >logout</button>
+					<!-- <button class="" >permissions</button> -->
+				</div>
+
+			</div>
 		</div>
 		<div class="flex column no-basis br1-solid grow overflow-auto">
 
+			<div class="p1">
+				<h4 class="flex bold">
+					<span class="bb2-solid block">Arguments</span>
+				</h4>
+			</div>
 			{#if endpoint}
 				<form class="flex column cmb1 p1">
-					<h4 class="bold">Arguments</h4>
 					{#if Object.keys(endpoint.schema).length == 0 }
 						<div class="fade">
 							N/A
@@ -139,12 +330,15 @@
 							<span class="fade normal monospace">{value.type}</span>
 						</div>
 						{#if value.type == 'boolean'}
-							<input 
-								bind:value={ values[hash][key] }
-								name={key}
-								type="checkbox" 
-								placeholder={key}
-								required={value.required} />
+							<label class="checkbox">
+								<input 
+									bind:checked={ values[hash][key] }
+									name={key}
+									type="checkbox" 
+									placeholder={key}
+									required={value.required} />
+								<span />
+							</label>
 						{:else if value.type == 'object' || value.type == 'array' }
 							<textarea 
 								bind:value={ values[hash][key] }
@@ -163,70 +357,77 @@
 						{/if}
 					{/each}
 				</form>
+			{:else}
+				<div class="plr1 mb1 fade">N/A</div>
+			{/if}
 
 
 				<div class="flex column cmb1 p1 bt1-solid">
-					<h4 class="bold">Endpoint</h4>
-					<p>{endpoint.description}</p>
+					<h4 class="flex bold">
+						<span class="bb2-solid block">Endpoint</span>
+					</h4>
+					{#if endpoint}
+						<p>{endpoint.description}</p>
 
-					{#each components as piece}
-						{#if piece.type > 0}
-							<div class="bold">
-								{piece.val}
-							</div>
-							<input 
-								bind:value={ piece.value }
-								name={ piece.val }
-								type="text" 
-								placeholder={ piece.val } />
-						{/if}
-					{/each}
-					<input type="text" disabled={true} value={path} />
-					<button 
-						class="filled"
-						disabled={waiting} 
-						on:click={submit}>
-						Send	
-					</button>
+						{#each components[hash] as piece}
+							{#if piece.type > 0}
+								<div class="bold">
+									{piece.val}
+								</div>
+								<input 
+									bind:value={ piece.value }
+									name={ piece.val }
+									type="text" 
+									placeholder={ piece.val } />
+							{/if}
+						{/each}
+						<input type="text" disabled={true} value={path} />
+						<button 
+							class="filled"
+							disabled={waiting} 
+							on:click={submit}>
+							send	
+						</button>
+					{:else}
+						<div class="fade">N/A</div>
+					{/if}
 				</div>
-			{:else}
-				<div>No endpoint current.</div>
-			{/if}
 		</div>
 		<div class="flex flex-column grow no-basis">
 
 
 
-			<div class="p1">
-				<h4 class="bold">Response</h4>
-				<p class="mtb1">
-					{#if timer && status }
-						<span class="bold">{ status }</span>
-						in { timer.toFixed(2) }s 
-						from <a 
-								target="_blank"
-								href={ hash }
-								class="bb1-solid inline-block">{ hash }</a>
-					{:else}
-						<span class="fade">N/A</span>
-					{/if}
-				</p>
+			<div class="overflow-hidden minh50vh maxh50vh h50vh flex column">
+				<div class="p1 flex row-space-between-center">
+					<h4 class="flex bold">
+						<span class="bb2-solid block">Response</span>
+					</h4>
+					<button on:click={clear}>clear</button>
+				</div>
+				<div class="overflow-auto h100pc">
+					<Table 
+						init={historyInit}
+						classes={historyClasses}
+						dimensions={historyDimensions}
+						callbacks={historyCallbacks}
+						features={historyFeatures} />
+				</div>
 			</div>
-			<div class="p1 bt1-solid overflow-auto">
-				<h4 class="bold">Data</h4>
-				<pre class="pre mtb1 monospace" style={`
-					white-space:normal;
-					word-break:break-word;
-				`}>
-					{@html waiting ? `<span class="fade">waiting...</span>` : str }
-				</pre>
+			<div class="flex column p1 bt1-solid overflow-hidden">
+				<div class="flex row-space-between-center">
+					<h4>
+						<span class="bb2-solid block">Data</span>
+					</h4>
+					<button on:click={copy}>copy</button>
+				</div>
+				<div class="overflow-auto h100pc w100pc">
+					<pre class="mtb1 monospace w100pc" style="word-wrap: break-word;white-space: pre-wrap;">
+						{@html waiting ? `<span class="fade">waiting...</span>` : str }
+					</pre>
+				</div>
+				<!-- <div class="w8em h8em">{@html svg}</div> -->
 			</div>
 
 		</div>
-	</div>
-	<div class="flex p1 bt1-solid">
-		<input type="text" placeholder="username" />
-		<input type="password" placeholder="password" />
-		<button>login</button>
 	</div>
 </main>

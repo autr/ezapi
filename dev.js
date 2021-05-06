@@ -3,9 +3,9 @@ const CAT_EXAMPLE = 'example'
 return eazapi.app( [
 
 	{
-		url: '/example_get',
+		url: '/example_get/:id/:name/:cat',
 		type: 'get',
-		description: 'example get',
+		description: 'example get lorem sdfdsfds sdf sdf s',
 		category: CAT_EXAMPLE,
 		schema: {
 			name: {
@@ -23,7 +23,7 @@ return eazapi.app( [
 		},
 		data: async params => {
 
-			return { foo: 'bar', ...params }
+			return { foo: 'bar', ...params, thing: 'fsdfdsfjh kj dsdkjs kjh kjh kjh kjh kjh kjhkjhkjhkjhkj hk jh kjhkjhkjh kjhkjhkjhkj jkhkjhkj kjhkjhkjhkjh ', dsfds: params, jkads: params }
 		}
 	},
 	{
@@ -34,11 +34,13 @@ return eazapi.app( [
 		schema: {
 			name: {
 				type: 'string',
-				example: 'Terrence McKenna'
+				example: 'Terrence McKenna',
+				required: true
 			},
 			email: {
 				type: 'string',
-				example: 't@kenna.org'
+				example: 't@kenna.org',
+				required: true
 			},
 			onoff: {
 				type: 'boolean',

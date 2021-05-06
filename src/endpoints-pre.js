@@ -90,18 +90,6 @@ module.exports = (opts, endpoints) => [
 		}
 	},
 	{
-		url: '/login',
-		type: 'get',
-		description: 'login with username and password',
-		category: types.CAT_AUTH,
-		schema: {},
-		emoji: '🔑',
-		data: async params => {
-
-			
-		}
-	},
-	{
 		url: '/whoami',
 		type: 'get',
 		description: 'view current user',
@@ -110,8 +98,9 @@ module.exports = (opts, endpoints) => [
 		emoji: '🔒',
 		data: async e => null,
 		next: async (req, res, data) => {
-
-			res.send( req.user )
+			let out = {username:'guest',loggedin: false}
+			if (req.isAuthenticated()) out = {username: req.user.username,loggedin: true}
+			res.send( out )
 		}
 	}
 ]

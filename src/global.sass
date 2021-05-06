@@ -45,5 +45,16 @@ html
 		.panel-tree, .panel-diff, .panel-history
 			overflow: auto
 			max-height: calc( 100vh - #{$header + $subheader} )
+		.filled 
+			.bb1-solid
+				border-color: var(--bg)
+			.cross
+				background-image: linear-gradient(to top left,transparent 0,transparent calc(50% - var(--stroke-width)),var(--bg) 50%,transparent calc(50% + var(--stroke-width)),transparent 100%),linear-gradient(to top right,transparent 0,transparent calc(50% - var(--stroke-width)),var(--bg) 50%,transparent calc(50% + var(--stroke-width)),transparent 100%)
+		table thead 
+			th
+				font-weight: bold
+		svg
+			width: 100%
+			height: 100%
 
 
