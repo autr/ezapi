@@ -20,6 +20,18 @@ const types = require( './src/types.js' )
 const endpointsPre = require( './src/endpoints-pre.js' )
 const endpointsPost = require( './src/endpoints-post.js' )
 
+function cleanRequestPath( url, root ) {
+	if (url.substring(0,root.length) == root) return url.substring(root.length)
+	return url
+}
+
+function getRegex( url, endpoints ) {
+	const urls = endpoints.map( e => e.url ).filter( e => e).map( parse )
+	const found = match( url, urls)
+	const regex = exec(url, found)
+	return regex
+}
+
 
 module.exports = {
 	types,
@@ -54,8 +66,23 @@ module.exports = {
 
 		console.log(`[ezapi]  using port ${opts.port}`)
 
+		if (!opts.session.secret) opts.session.secret = SECRET
+
+		const endpoints = [
+			...endpointsPre( opts, _endpoints ),
+			..._endpoints, // <--- endpoints
+			...endpointsPost( opts, _endpoints )
+		]
+
+		if (opts.nocache) app.use(nocache())
+
+
 		const auth = { 
-			strategy: async ( username, password, done ) => {
+			strategy: async ( req, username, password, done ) => {
+
+				const clean = cleanRequestPath( req.path, opts.apiRoot )
+				const regex = getRegex( clean, endpoints )
+				console.log("STRATEGRYRYRGYGRYGR", clean, regex)
 				console.log(`[ezapi]  strategy ${username} p**sw**d`)
 
 				const token = await crypto.scryptSync( password, process.env.EZAPI_KEY, 64).toString('hex')
@@ -68,11 +95,14 @@ module.exports = {
 					done( null, false, 'incorrect password')
 				}
 			},
-			serialize: async (u, done) => {
+			serialize: async (u, done, ex) => {
+
+				console.log('SERIALIZEEEEE', 'U', u, 'DONE', done, 'EX', ex)
 				console.log(`[ezapi]  deserialise ${u?.username}`)
 				done(null, u.username)
 			},
-			deserialize: async (username, done) => {
+			deserialize: async (username, done, ex) => {
+				console.log('DESERIALIZEEEEE', 'USERNAME', username, 'DONE', done, 'EX', ex)
 				console.log(`[ezapi]  deserialise ${username}`)
 				if (username == 'admin') {
 					done( null, { username: 'admin' } ) 
@@ -96,19 +126,10 @@ module.exports = {
 			...(_auth || {}) 
 		}
 
-		passport.use('login', new LocalStrategy( auth.strategy ) )
+		passport.use('login', new LocalStrategy( { passReqToCallback: true }, auth.strategy ) )
 		passport.serializeUser( auth.serialize )
 		passport.deserializeUser( auth.deserialize )
 
-		if (!opts.session.secret) opts.session.secret = SECRET
-
-		const endpoints = [
-			...endpointsPre( opts, _endpoints ),
-			..._endpoints, // <--- endpoints
-			...endpointsPost( opts, _endpoints )
-		]
-
-		if (opts.nocache) app.use(nocache())
 
 
 		const sendError = ( res, code, message, extra ) => {
@@ -141,6 +162,8 @@ module.exports = {
 
 						let regex = null
 						let user = req.isAuthenticated() ? req.user : 'guest'
+
+						console.log("USERRRRR", user, req.user)
 						if (!opts.silent) console.log(`[api] 👤  ${req.method} ${user} -> ${req.path}`)
 
 						const method = req.method.toLowerCase()
