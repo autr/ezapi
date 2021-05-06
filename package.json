@@ -1,6 +1,6 @@
 {
   "name": "ez-ezapi",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "main": "app.js",
   "author": "G.Sinnott",
   "license": "MIT",
@@ -26,7 +26,6 @@
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
-    "displays": "^1.1.4",
     "express": "^4.17.1",
     "express-session": "^1.17.1",
     "http": "^0.0.1-security",

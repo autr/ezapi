@@ -159,7 +159,7 @@ module.exports = {
 						// ----------------------------------------
 
 						if (!regex) {
-							console.log(`[api] 🛑  ${401} "${user}" not authorised with "${JSON.stringify(permissions)}"` )
+							console.log(`[api] 🛑  ${401} "${user}" ${cpath} not authorised with ${JSON.stringify(permissions)}` )
 							return sendError( res, 401, 'not authorised')
 						}
 
