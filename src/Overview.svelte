@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import fetcher from 'fetcher'
+	import fetcher from 'fetcheriser'
 	import { Table } from 'svelte-tabular-table'
 	import { parse } from 'matchit'
 
