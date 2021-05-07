@@ -6,7 +6,7 @@
 	import svg from './svg.js'
 
 	let endpoints = []
-
+	let inited = false
 
 
 	$: init = {
@@ -84,6 +84,7 @@
 		}, 10)
 
 		await getPermissions()
+		inited = true
 
 	})
 
@@ -185,6 +186,13 @@
 	async function logout( e ) {
 		e.preventDefault()
 		e.stopPropagation()
+		const res = await fetcher.post( '/api/logout' )
+		if (res.ok) {
+			await whoami()
+			await getPermissions()
+		} else {
+			loginError = res?.message || res
+		}
 	}
 
 	$: str = JSON.stringify(data, null, '\t')
@@ -275,7 +283,7 @@
 					<span class="bb2-solid block">Application Programming Interface</span>
 				</h4>
 			</div>
-			<div class="overflow-auto h100pc">
+			<div class:hidden={!inited} class="overflow-auto h100pc">
 				<Table {init} {classes} {features} {callbacks} {dimensions} />
 			</div>
 
@@ -283,8 +291,8 @@
 				<h4 class="flex bold">
 					<span class="bb2-solid block">Auth</span>
 				</h4>
-				<div class="flex row-space-between-center">
-					<div>
+				<div class:hidden={!inited} class="flex row-space-between-center">
+					<div class="h2em">
 						<span>Viewing as </span>
 						<span class="bb1-solid inline-block bold">{who.username || ''}</span>
 					</div>
@@ -295,6 +303,7 @@
 				<form 
 					method="post" 
 					action="/api/login" 
+					class:hidden={!inited} 
 					class:none={ who.loggedin }
 					class="flex row">
 					<input name="username" class="grow mr1" bind:value={creds.username} type="text" placeholder="username" />
@@ -318,7 +327,7 @@
 				</h4>
 			</div>
 			{#if endpoint}
-				<form class="flex column cmb1 p1">
+				<form class="flex column cmb1 p1" class:hidden={!inited} >
 					{#if Object.keys(endpoint.schema).length == 0 }
 						<div class="fade">
 							N/A
@@ -404,7 +413,7 @@
 					</h4>
 					<button on:click={clear}>clear</button>
 				</div>
-				<div class="overflow-auto h100pc">
+				<div class="overflow-auto h100pc" class:hidden={!inited} >
 					<Table 
 						init={historyInit}
 						classes={historyClasses}
@@ -420,9 +429,9 @@
 					</h4>
 					<button on:click={copy}>copy</button>
 				</div>
-				<div class="overflow-auto h100pc w100pc">
+				<div class="overflow-auto h100pc w100pc" class:hidden={!inited} >
 					<pre class="mtb1 monospace w100pc" style="word-wrap: break-word;white-space: pre-wrap;">
-						{@html waiting ? `<span class="fade">waiting...</span>` : str }
+						{@html waiting ? `<span class="fade">waiting...</span>` : str == '""' ? '' : str }
 					</pre>
 				</div>
 				<!-- <div class="w8em h8em">{@html svg}</div> -->

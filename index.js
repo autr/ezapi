@@ -82,7 +82,6 @@ module.exports = {
 
 				const clean = cleanRequestPath( req.path, opts.apiRoot )
 				const regex = getRegex( clean, endpoints )
-				console.log("STRATEGRYRYRGYGRYGR", clean, regex)
 				console.log(`[ezapi]  strategy ${username} p**sw**d`)
 
 				const token = await crypto.scryptSync( password, process.env.EZAPI_KEY, 64).toString('hex')
@@ -95,17 +94,15 @@ module.exports = {
 					done( null, false, 'incorrect password')
 				}
 			},
-			serialize: async (u, done, ex) => {
+			serialize: async (user, done) => {
 
-				console.log('SERIALIZEEEEE', 'U', u, 'DONE', done, 'EX', ex)
-				console.log(`[ezapi]  deserialise ${u?.username}`)
-				done(null, u.username)
+				console.log(`[ezapi]  deserialise ${user?.username}`)
+				done(null, user.username)
 			},
-			deserialize: async (username, done, ex) => {
-				console.log('DESERIALIZEEEEE', 'USERNAME', username, 'DONE', done, 'EX', ex)
+			deserialize: async (req, username, done) => {
 				console.log(`[ezapi]  deserialise ${username}`)
 				if (username == 'admin') {
-					done( null, { username: 'admin' } ) 
+					done( null, { username } ) 
 				} else {
 					done(null, null)
 				}
@@ -163,7 +160,6 @@ module.exports = {
 						let regex = null
 						let user = req.isAuthenticated() ? req.user : 'guest'
 
-						console.log("USERRRRR", user, req.user)
 						if (!opts.silent) console.log(`[api] 👤  ${req.method} ${user} -> ${req.path}`)
 
 						const method = req.method.toLowerCase()
@@ -195,7 +191,7 @@ module.exports = {
 							return sendError( res, 401, 'not authorised')
 						}
 
-						const args = ( item.type.toLowerCase() == 'get' ) ? req.query : req.body
+						let args = ( item.type.toLowerCase() == 'get' ) ? req.query : req.body
 
 						if ( args?.ezapi_permissions ) {
 							return res.send( 'permitted' )
@@ -206,6 +202,14 @@ module.exports = {
 						const schema = {
 							type: 'object',
 							properties: item.schema
+						}
+
+						// convert (get) url params into actual json (ie. boolean, integer etc)
+
+						if ( req.method.toLowerCase() == 'get' ) {
+							for (const [k, v] of Object.entries(args)) {
+								args[k] = JSON.parse( v.toLowerCase() )
+							}
 						}
 
 						const result = validate( args, schema, {required: true} )

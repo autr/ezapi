@@ -3,7 +3,7 @@ const CAT_EXAMPLE = 'example'
 return eazapi.app( [
 
 	{
-		url: '/example_get/:id/:name/:cat',
+		url: '/example_get/:section/:name/:id',
 		type: 'get',
 		description: 'example get lorem sdfdsfds sdf sdf s',
 		category: CAT_EXAMPLE,
@@ -23,11 +23,11 @@ return eazapi.app( [
 		},
 		data: async params => {
 
-			return { foo: 'bar', ...params, thing: 'fsdfdsfjh kj dsdkjs kjh kjh kjh kjh kjh kjhkjhkjhkjhkj hk jh kjhkjhkjh kjhkjhkjhkj jkhkjhkj kjhkjhkjhkjh ', dsfds: params, jkads: params }
+			return { params }
 		}
 	},
 	{
-		url: '/example_post',
+		url: '/:root/:category/example_post',
 		type: 'post',
 		description: 'example get',
 		category: CAT_EXAMPLE,
@@ -49,7 +49,7 @@ return eazapi.app( [
 		},
 		data: async params => {
 
-			return { hello: 'world', ...params }
+			return { params}
 		}
 	}
 
