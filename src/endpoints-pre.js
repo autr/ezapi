@@ -12,7 +12,6 @@ console.log(`[ezapi] 📺  serving endpoints to: ${overviewPath}`)
 
 module.exports = async (opts, endpoints) => {
 	const CORS = await opts.cors()
-	console.log('SETTING', CORS)
 	return [
 		{
 			type: 'use',

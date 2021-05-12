@@ -84,11 +84,10 @@ module.exports = {
 
 				const CORS = process.env.EZAPI_CORS
 
-				if (CORS == undefined) throw `no cors set with env variable EZAPI_CORS`
 				const out = {
-					// exposedHeaders: ['set-cookie'],
-					// credentials: true, 
-					origin: CORS.split(',')
+					exposedHeaders: ['set-cookie'],
+					credentials: true, 
+					origin: (CORS || '').split(',')
 				}
 				return out
 
@@ -96,6 +95,7 @@ module.exports = {
 			nocache: false,
 			...(_opts||{})
 		}
+
 
 		log.yellow(`[ezapi] 🚰  using port ${opts.port}`)
 
@@ -165,7 +165,12 @@ module.exports = {
 			const json = { message, code, status: code, error: true, ...extra }
 			res.status( code ).send( json )
 		}
+
 		const CORS = await opts.cors()
+
+		log.yellow(`[ezapi] 👨‍✈️  using cors policy: `)
+		console.log('--->', CORS)
+
 
 		endpoints.forEach( item => {
 
