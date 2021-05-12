@@ -5,6 +5,7 @@ const path = require('path')
 const os = require('os')
 const { spawn, execSync, spawnSync } = require('child_process')
 
+const cors = require('cors')
 const express = require('express')
 const app = express()
 const nocache = require('nocache')
@@ -32,10 +33,34 @@ function getRegex( url, endpoints ) {
 	return regex
 }
 
+// perform res and req
+
+const colors = {
+	green: '\x1b[92m',
+	blue: '\x1b[96m',
+	pink: '\x1b[95m',
+	yellow: '\x1b[103m',
+	end: '\033[0m'
+}
+
+const icon = {
+	GET: '\x1b[102mGET\033[0m',
+	POST: '\x1b[104mPOST\033[0m',
+	PUT: '\x1b[104mPUT\033[0m',
+	DELETE: '\x1b[105mDELETE\033[0m'
+}
+
+const log = {}
+
+Object.keys(colors).forEach( c => {
+	log[c] = text => {
+		console.log(`${colors[c]}${text}${colors.end}`)
+	}
+})
 
 module.exports = {
 	types,
-	app: ( _endpoints, _opts, _auth ) => {
+	app: async ( _endpoints, _opts, _auth ) => {
 
 
 		if ( !Array.isArray( _endpoints ) ) throw '[ezapi] first argument "endpoints" is not an array'
@@ -43,7 +68,7 @@ module.exports = {
 
 		const SECRET = require('crypto').randomBytes(64).toString('hex')
 
-		const opts = {
+		let opts = {
 			port: 3000,
 			apiRoot: '/api',
 			session: { 
@@ -55,23 +80,31 @@ module.exports = {
 					maxAge: 60*60*1000
 				}
 			},
-			cors: {
-				exposedHeaders: ['set-cookie'],
-				credentials: true, 
-				origin: 'http://localhost:5000'
+			cors: async e => {
+
+				const CORS = process.env.EZAPI_CORS
+
+				if (CORS == undefined) throw `no cors set with env variable EZAPI_CORS`
+				const out = {
+					// exposedHeaders: ['set-cookie'],
+					// credentials: true, 
+					origin: CORS.split(',')
+				}
+				return out
+
 			},
 			nocache: false,
 			...(_opts||{})
 		}
 
-		console.log(`[ezapi]  using port ${opts.port}`)
+		log.yellow(`[ezapi] 🚰  using port ${opts.port}`)
 
 		if (!opts.session.secret) opts.session.secret = SECRET
 
 		const endpoints = [
-			...endpointsPre( opts, _endpoints ),
+			...(await endpointsPre( opts, _endpoints )),
 			..._endpoints, // <--- endpoints
-			...endpointsPost( opts, _endpoints )
+			...(await endpointsPost( opts, _endpoints ))
 		]
 
 		if (opts.nocache) app.use(nocache())
@@ -82,7 +115,7 @@ module.exports = {
 
 				const clean = cleanRequestPath( req.path, opts.apiRoot )
 				const regex = getRegex( clean, endpoints )
-				console.log(`[ezapi]  strategy ${username} p**sw**d`)
+				log.yellow(`[ezapi]  strategy ${username} p**sw**d`)
 
 				const token = await crypto.scryptSync( password, process.env.EZAPI_KEY, 64).toString('hex')
 				const hasAdmin = username == 'admin' || ( username == process.env.EZAPI_ADMIN && username )
@@ -96,11 +129,11 @@ module.exports = {
 			},
 			serialize: async (user, done) => {
 
-				console.log(`[ezapi]  deserialise ${user?.username}`)
+				log.yellow(`[ezapi]  deserialise ${user?.username}`)
 				done(null, user.username)
 			},
 			deserialize: async (req, username, done) => {
-				console.log(`[ezapi]  deserialise ${username}`)
+				log.yellow(`[ezapi]  deserialise ${username}`)
 				if (username == 'admin') {
 					done( null, { username } ) 
 				} else {
@@ -128,28 +161,36 @@ module.exports = {
 		passport.deserializeUser( auth.deserialize )
 
 
-
 		const sendError = ( res, code, message, extra ) => {
 			const json = { message, code, status: code, error: true, ...extra }
 			res.status( code ).send( json )
 		}
+		const CORS = await opts.cors()
 
 		endpoints.forEach( item => {
 
-			const emoji = item.type == 'use' ? '🔧' : item.type == 'get' ? '🍬' : '✉️'
-			if (!opts.silent) console.log(`[api] ${emoji}  ${item.type.toUpperCase()}: ${item.url || '~'} ${ item.type == 'use' ? item.description : ''}`)
+			const EMOJI = item.type == 'use' ? '🔧' : item.type == 'get' ? '🍬' : '✉️'
+
+			if (!opts.silent) log.blue(`[ezapi] ${EMOJI}  ${item.type.toUpperCase()}: ${item.url || '~'} ${ item.type == 'use' ? item.description : ''}`)
 			if (item.type == 'use') {
 				if (item.url)
 					app[ item.type ]( item.url, item.next )
 				else
 					app[ item.type ]( item.next )
 			} else {
+
+
 				app[ item.type ]( path.join( opts.apiRoot, item.url ), async (req, res) => {
+
+					const METHOD = icon[req.method.toUpperCase()]
+					let args = ( item.type.toLowerCase() == 'get' ) ? req.query : req.body
+					const CHECK_PERMISSIONS = args?.ezapi_permissions
+
 					try {
 
 						let ipV4 = req.connection.remoteAddress.replace(/^.*:/, '')
 						if (ipV4 === '1') ipV4 = 'localhost'
-						if (!opts.silent) console.log(`[api] 🐟  incoming request from "${ipV4}"...`) 
+						if (!opts.silent) console.log(`[ezapi] 🐟  ---> request from "${ipV4}"...`) 
 
 						// const info = (new ua()).setUA( req.headers['user-agent'] ).getResult()
 
@@ -158,21 +199,21 @@ module.exports = {
 						// ----------------------------------------
 
 						let regex = null
-						let user = req.isAuthenticated() ? req.user : 'guest'
+						let user = req.isAuthenticated() ? req.user : { username: 'guest' }
 
-						if (!opts.silent) console.log(`[api] 👤  ${req.method} ${user} -> ${req.path}`)
+						if (!opts.silent) log.blue(`[ezapi] 👤  ${METHOD} ${req.path} <--- ${user?.username || user}`)
 
-						const method = req.method.toLowerCase()
+						const meth = req.method.toLowerCase()
 
 						let cpath = req.path
 						if (cpath.substring(0,opts.apiRoot.length) == opts.apiRoot) {
 							// clean path
 							cpath = cpath.substring(opts.apiRoot.length)
 						}
-						const permissions = ( await auth.permissions( user ) || {} )[method] || ''
+						const permissions = ( await auth.permissions( user ) || {} )[meth] || ''
 
 						const whitelist = permissions.split(',').filter( u => u != '').map( u => u.trim() ).map( parse )
-						const apilist = endpoints.filter( a => a.type.toLowerCase() == method ).map( a => a.url ).map(parse) // !
+						const apilist = endpoints.filter( a => a.type.toLowerCase() == meth ).map( a => a.url ).map(parse) // !
 						const foundA = match(cpath, whitelist) // !
 						const foundB = match(cpath, apilist) // !
 
@@ -184,18 +225,15 @@ module.exports = {
 						}
 
 						// ----------------------------------------
-						// ----------------------------------------
 
 						if (!regex) {
-							console.log(`[api] 🛑  ${401} ${req.isAuthenticated()} "${user.username}" ${cpath} not authorised with ${JSON.stringify(permissions)}` )
+							log.pink(`[ezapi] 🛑  ${401} ${req.isAuthenticated()} "${user.username}" ${cpath} not authorised with permissions for "${JSON.stringify(permissions)}"` )
 							return sendError( res, 401, 'not authorised')
 						}
 
-						let args = ( item.type.toLowerCase() == 'get' ) ? req.query : req.body
+						// checking permissions!
 
-						if ( args?.ezapi_permissions ) {
-							return res.send( 'permitted' )
-						}
+						if ( CHECK_PERMISSIONS ) return res.send( 'permitted' )
 
 						// check schema
 
@@ -206,7 +244,7 @@ module.exports = {
 
 						// convert (get) url params into actual json (ie. boolean, integer etc)
 
-						if ( req.method.toLowerCase() == 'get' ) {
+						if ( meth == 'get' ) {
 							for (const [k, v] of Object.entries(args)) {
 								args[k] = JSON.parse( v.toLowerCase() )
 							}
@@ -219,7 +257,7 @@ module.exports = {
 								return err.path[err.path.length-1] + ' ' + err.message
 							}).join('\n')
 
-							console.log(`[api] 🛑  ${422} ${req.method} ${req.path} invalid schema "${errs}" -> ${item.type} ${item.url}` )
+							log.pink(`[ezapi] 🛑  ${422} ${METHOD} ${req.path} invalid schema "${errs}" -> ${item.type} ${item.url}` )
 							const extra = { args, schema, result } 
 							return sendError( res, 422, errs, extra)
 						}
@@ -240,16 +278,7 @@ module.exports = {
 
 						// ----------------------------------------------
 
-						// perform res and req
-
-						const colors = {
-							get: '\x1b[92m',
-							post: '\x1b[96m',
-							delete: '\x1b[95m'
-						}
-						const c = colors[req.method.toLowerCase()]
-						const e = '\033[0m'
-						if (!opts.silent) console.log(`${c}[api] ✅  ${req.method} ${req.path} -> success! ${e}`)
+						if (!opts.silent) log.green(`[ezapi] ✅  ${METHOD} ${req.path} ---> success`)
 
 						const send = item.next || ( (req, res, data) => res.send( data ) )
 						return send( req, res, data )
@@ -258,7 +287,7 @@ module.exports = {
 
 						let code = 500
 						if (err.code == 'ENOENT') code = 404
-						console.log(`[api] 🛑  ${code} ${req.method} ${req.path}`, err.message || err, err.stack || err )
+						log.pink(`[ezapi] 🛑  ${code} ${METHOD} ${req.path} ${err.message || err, err.stack || err}` )
 						return sendError( res, 500, err.message || err )
 						
 					}
@@ -268,9 +297,8 @@ module.exports = {
 
 
 		const server = app.listen( opts.port , async () => {
-
 			const port = server.address().port
-			console.log(`[api] ✨  server running on port: ${port}`)
+			log.yellow(`[ezapi] ✨  server running on port: ${port}`)
 		})
 
 		return server

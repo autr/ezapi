@@ -1,20 +1,24 @@
 const crypto = require('crypto')
+const prompt = require('password-prompt')
 
 async function run() {
 
-	const EZAPI_KEY = crypto.randomBytes(64).toString('hex')
+	let passwordA = await prompt('password: ', { method: 'hide' })
+	let passwordB = await prompt('confirm password: ', { method: 'hide' })
+
+	if (passwordA != passwordB) return console.error('error: passwords do not match')
+	if (passwordA.length < 6) return console.error('error: password must have minimum 6 chars')
+
+	const KEY = crypto.randomBytes(64).toString('hex')
 	
 	const env = {
-		EZAPI_ADMIN: 'g@sinnott.cc',
-		EZAPI_KEY,
-		EZAPI_PASSWORD: await crypto.scryptSync( process.argv[2], EZAPI_KEY, 64).toString('hex')
+		KEY,
+		PASS: await crypto.scryptSync( passwordA, KEY, 64).toString('hex')
 	}
-
 
 	for (const [key, value] of Object.entries(env)) {
 		console.log( key + '=' + value )
 	}
-
 }
 
 run()
