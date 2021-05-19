@@ -53,4 +53,7 @@ return eazapi.app( [
 		}
 	}
 
-], {nocache: true} )
+], { 
+	port: 3001,
+	nocache: true
+} )

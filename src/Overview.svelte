@@ -68,7 +68,9 @@
 
 		for(let i = 0; i < endpoints.length; i++) {
 			let e = endpoints[i]
-			const res = await fetcher[e.type.toLowerCase()]( e.url, { ezapi_permissions: true  } )
+			const type = (e?.type || 'unknown').toLowerCase()
+			console.log(`[Overview] getting permissions for ${type} ${e.url}`, fetcher)
+			const res = await fetcher[type]( e.url, { ezapi_permissions: true  } )
 			endpoints[i].permissions = res.ok || false
 		}
 	}

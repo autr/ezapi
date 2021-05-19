@@ -579,11 +579,11 @@ var app = (function () {
 
     		let config = {};
 
-    		if ( method == 'del' ) {
+    		if ( method == 'delete' ) {
     			config = {
     				...config,
     				credentials: 'include', // same-origin,
-    				method: 'DELETE'
+    				method: method.toUpperCase()
     			};
     		}
 
@@ -635,7 +635,7 @@ var app = (function () {
     	}
     };
 
-    const names = ['get','post','del','put'];
+    const names = ['get','post','delete','put'];
     let out = {};
 
     names.forEach( n => {
@@ -643,9 +643,6 @@ var app = (function () {
     		return await rest( n, url, args, silent )
     	};
     });
-
-
-    var fetcheriser = out;
 
     function log( msg ) {
     	console.log( `[svelte-tabular-table] ${msg}`);
@@ -6154,7 +6151,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (369:3) {:else}
+    // (371:3) {:else}
     function create_else_block_2(ctx) {
     	let div;
 
@@ -6163,7 +6160,7 @@ var app = (function () {
     			div = element("div");
     			div.textContent = "N/A";
     			attr_dev(div, "class", "plr1 mb1 fade");
-    			add_location(div, file, 369, 4, 9091);
+    			add_location(div, file, 371, 4, 9207);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -6178,14 +6175,14 @@ var app = (function () {
     		block,
     		id: create_else_block_2.name,
     		type: "else",
-    		source: "(369:3) {:else}",
+    		source: "(371:3) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (329:3) {#if endpoint}
+    // (331:3) {#if endpoint}
     function create_if_block_2(ctx) {
     	let form;
     	let show_if = Object.keys(/*endpoint*/ ctx[10].schema).length == 0;
@@ -6211,7 +6208,7 @@ var app = (function () {
 
     			attr_dev(form, "class", "flex column cmb1 p1");
     			toggle_class(form, "hidden", !/*inited*/ ctx[3]);
-    			add_location(form, file, 329, 4, 7939);
+    			add_location(form, file, 331, 4, 8055);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, form, anchor);
@@ -6275,14 +6272,14 @@ var app = (function () {
     		block,
     		id: create_if_block_2.name,
     		type: "if",
-    		source: "(329:3) {#if endpoint}",
+    		source: "(331:3) {#if endpoint}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (331:5) {#if Object.keys(endpoint.schema).length == 0 }
+    // (333:5) {#if Object.keys(endpoint.schema).length == 0 }
     function create_if_block_5(ctx) {
     	let div;
 
@@ -6291,7 +6288,7 @@ var app = (function () {
     			div = element("div");
     			div.textContent = "N/A";
     			attr_dev(div, "class", "fade");
-    			add_location(div, file, 331, 6, 8057);
+    			add_location(div, file, 333, 6, 8173);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -6305,14 +6302,14 @@ var app = (function () {
     		block,
     		id: create_if_block_5.name,
     		type: "if",
-    		source: "(331:5) {#if Object.keys(endpoint.schema).length == 0 }",
+    		source: "(333:5) {#if Object.keys(endpoint.schema).length == 0 }",
     		ctx
     	});
 
     	return block;
     }
 
-    // (359:6) {:else}
+    // (361:6) {:else}
     function create_else_block_1(ctx) {
     	let input;
     	let input_name_value;
@@ -6332,7 +6329,7 @@ var app = (function () {
     			attr_dev(input, "class", "flex grow p0-6");
     			input.required = input_required_value = /*value*/ ctx[52].required;
     			attr_dev(input, "placeholder", input_placeholder_value = /*key*/ ctx[51]);
-    			add_location(input, file, 359, 7, 8875);
+    			add_location(input, file, 361, 7, 8991);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, input, anchor);
@@ -6373,14 +6370,14 @@ var app = (function () {
     		block,
     		id: create_else_block_1.name,
     		type: "else",
-    		source: "(359:6) {:else}",
+    		source: "(361:6) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (351:65) 
+    // (353:65) 
     function create_if_block_4(ctx) {
     	let textarea;
     	let textarea_name_value;
@@ -6401,7 +6398,7 @@ var app = (function () {
     			attr_dev(textarea, "rows", "6");
     			textarea.required = textarea_required_value = /*value*/ ctx[52].required;
     			attr_dev(textarea, "placeholder", textarea_placeholder_value = /*key*/ ctx[51]);
-    			add_location(textarea, file, 351, 7, 8659);
+    			add_location(textarea, file, 353, 7, 8775);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, textarea, anchor);
@@ -6442,14 +6439,14 @@ var app = (function () {
     		block,
     		id: create_if_block_4.name,
     		type: "if",
-    		source: "(351:65) ",
+    		source: "(353:65) ",
     		ctx
     	});
 
     	return block;
     }
 
-    // (341:6) {#if value.type == 'boolean'}
+    // (343:6) {#if value.type == 'boolean'}
     function create_if_block_3(ctx) {
     	let label;
     	let input;
@@ -6477,10 +6474,10 @@ var app = (function () {
     			attr_dev(input, "type", "checkbox");
     			attr_dev(input, "placeholder", input_placeholder_value = /*key*/ ctx[51]);
     			input.required = input_required_value = /*value*/ ctx[52].required;
-    			add_location(input, file, 342, 8, 8390);
-    			add_location(span, file, 348, 8, 8561);
+    			add_location(input, file, 344, 8, 8506);
+    			add_location(span, file, 350, 8, 8677);
     			attr_dev(label, "class", "checkbox");
-    			add_location(label, file, 341, 7, 8357);
+    			add_location(label, file, 343, 7, 8473);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, label, anchor);
@@ -6525,14 +6522,14 @@ var app = (function () {
     		block,
     		id: create_if_block_3.name,
     		type: "if",
-    		source: "(341:6) {#if value.type == 'boolean'}",
+    		source: "(343:6) {#if value.type == 'boolean'}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (336:5) {#each Object.entries(endpoint.schema) as [key, value]}
+    // (338:5) {#each Object.entries(endpoint.schema) as [key, value]}
     function create_each_block_1(ctx) {
     	let div;
     	let t0_value = /*key*/ ctx[51] + "";
@@ -6569,9 +6566,9 @@ var app = (function () {
     			if_block.c();
     			if_block_anchor = empty();
     			attr_dev(span, "class", "fade normal monospace");
-    			add_location(span, file, 338, 7, 8245);
+    			add_location(span, file, 340, 7, 8361);
     			attr_dev(div, "class", "bold");
-    			add_location(div, file, 336, 6, 8178);
+    			add_location(div, file, 338, 6, 8294);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -6614,14 +6611,14 @@ var app = (function () {
     		block,
     		id: create_each_block_1.name,
     		type: "each",
-    		source: "(336:5) {#each Object.entries(endpoint.schema) as [key, value]}",
+    		source: "(338:5) {#each Object.entries(endpoint.schema) as [key, value]}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (400:5) {:else}
+    // (402:5) {:else}
     function create_else_block(ctx) {
     	let div;
 
@@ -6630,7 +6627,7 @@ var app = (function () {
     			div = element("div");
     			div.textContent = "N/A";
     			attr_dev(div, "class", "fade");
-    			add_location(div, file, 400, 6, 9828);
+    			add_location(div, file, 402, 6, 9944);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -6645,14 +6642,14 @@ var app = (function () {
     		block,
     		id: create_else_block.name,
     		type: "else",
-    		source: "(400:5) {:else}",
+    		source: "(402:5) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (378:5) {#if endpoint}
+    // (380:5) {#if endpoint}
     function create_if_block(ctx) {
     	let p;
     	let t0_value = /*endpoint*/ ctx[10].description + "";
@@ -6688,14 +6685,14 @@ var app = (function () {
     			t3 = space();
     			button = element("button");
     			t4 = text("send");
-    			add_location(p, file, 378, 6, 9304);
+    			add_location(p, file, 380, 6, 9420);
     			attr_dev(input, "type", "text");
     			input.disabled = true;
     			input.value = /*path*/ ctx[11];
-    			add_location(input, file, 392, 6, 9639);
+    			add_location(input, file, 394, 6, 9755);
     			attr_dev(button, "class", "filled");
     			button.disabled = /*waiting*/ ctx[4];
-    			add_location(button, file, 393, 6, 9696);
+    			add_location(button, file, 395, 6, 9812);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -6769,14 +6766,14 @@ var app = (function () {
     		block,
     		id: create_if_block.name,
     		type: "if",
-    		source: "(378:5) {#if endpoint}",
+    		source: "(380:5) {#if endpoint}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (382:7) {#if piece.type > 0}
+    // (384:7) {#if piece.type > 0}
     function create_if_block_1(ctx) {
     	let div;
     	let t0_value = /*piece*/ ctx[48].val + "";
@@ -6799,11 +6796,11 @@ var app = (function () {
     			t1 = space();
     			input = element("input");
     			attr_dev(div, "class", "bold");
-    			add_location(div, file, 382, 8, 9411);
+    			add_location(div, file, 384, 8, 9527);
     			attr_dev(input, "name", input_name_value = /*piece*/ ctx[48].val);
     			attr_dev(input, "type", "text");
     			attr_dev(input, "placeholder", input_placeholder_value = /*piece*/ ctx[48].val);
-    			add_location(input, file, 385, 8, 9474);
+    			add_location(input, file, 387, 8, 9590);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -6846,14 +6843,14 @@ var app = (function () {
     		block,
     		id: create_if_block_1.name,
     		type: "if",
-    		source: "(382:7) {#if piece.type > 0}",
+    		source: "(384:7) {#if piece.type > 0}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (381:6) {#each components[hash] as piece}
+    // (383:6) {#each components[hash] as piece}
     function create_each_block(ctx) {
     	let if_block_anchor;
     	let if_block = /*piece*/ ctx[48].type > 0 && create_if_block_1(ctx);
@@ -6891,7 +6888,7 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(381:6) {#each components[hash] as piece}",
+    		source: "(383:6) {#each components[hash] as piece}",
     		ctx
     	});
 
@@ -7093,101 +7090,101 @@ var app = (function () {
     			div15 = element("div");
     			pre = element("pre");
     			attr_dev(span0, "class", "bb2-solid block");
-    			add_location(span0, file, 282, 5, 6402);
+    			add_location(span0, file, 284, 5, 6518);
     			attr_dev(h40, "class", "bold flex");
-    			add_location(h40, file, 281, 4, 6374);
+    			add_location(h40, file, 283, 4, 6490);
     			attr_dev(div0, "class", "p1");
-    			add_location(div0, file, 280, 3, 6353);
+    			add_location(div0, file, 282, 3, 6469);
     			attr_dev(div1, "class", "overflow-auto h100pc");
     			toggle_class(div1, "hidden", !/*inited*/ ctx[3]);
-    			add_location(div1, file, 285, 3, 6496);
+    			add_location(div1, file, 287, 3, 6612);
     			attr_dev(span1, "class", "bb2-solid block");
-    			add_location(span1, file, 291, 5, 6711);
+    			add_location(span1, file, 293, 5, 6827);
     			attr_dev(h41, "class", "flex bold");
-    			add_location(h41, file, 290, 4, 6683);
-    			add_location(span2, file, 295, 6, 6864);
+    			add_location(h41, file, 292, 4, 6799);
+    			add_location(span2, file, 297, 6, 6980);
     			attr_dev(span3, "class", "bb1-solid inline-block bold");
-    			add_location(span3, file, 296, 6, 6895);
+    			add_location(span3, file, 298, 6, 7011);
     			attr_dev(div2, "class", "h2em");
-    			add_location(div2, file, 294, 5, 6839);
-    			add_location(div3, file, 298, 5, 6982);
+    			add_location(div2, file, 296, 5, 6955);
+    			add_location(div3, file, 300, 5, 7098);
     			attr_dev(div4, "class", "flex row-space-between-center");
     			toggle_class(div4, "hidden", !/*inited*/ ctx[3]);
-    			add_location(div4, file, 293, 4, 6767);
+    			add_location(div4, file, 295, 4, 6883);
     			attr_dev(input0, "name", "username");
     			attr_dev(input0, "class", "grow mr1");
     			attr_dev(input0, "type", "text");
     			attr_dev(input0, "placeholder", "username");
-    			add_location(input0, file, 308, 5, 7178);
+    			add_location(input0, file, 310, 5, 7294);
     			attr_dev(input1, "name", "password");
     			attr_dev(input1, "class", "grow mr1");
     			attr_dev(input1, "type", "password");
     			attr_dev(input1, "placeholder", "password");
-    			add_location(input1, file, 309, 5, 7289);
+    			add_location(input1, file, 311, 5, 7405);
     			attr_dev(button0, "class", "filled ");
-    			add_location(button0, file, 310, 5, 7404);
+    			add_location(button0, file, 312, 5, 7520);
     			attr_dev(form, "method", "post");
     			attr_dev(form, "action", "/api/login");
     			attr_dev(form, "class", "flex row");
     			toggle_class(form, "hidden", !/*inited*/ ctx[3]);
     			toggle_class(form, "none", /*who*/ ctx[5].loggedin);
-    			add_location(form, file, 302, 4, 7035);
+    			add_location(form, file, 304, 4, 7151);
     			attr_dev(button1, "class", "filled");
-    			add_location(button1, file, 315, 5, 7589);
+    			add_location(button1, file, 317, 5, 7705);
     			attr_dev(div5, "class", "grow basis0em h100pc flex row-flex-start-stretch cmr1");
     			toggle_class(div5, "none", !/*who*/ ctx[5].loggedin);
-    			add_location(div5, file, 312, 4, 7477);
+    			add_location(div5, file, 314, 4, 7593);
     			attr_dev(div6, "class", "p1 bt1-solid flex column cmb1");
-    			add_location(div6, file, 289, 3, 6635);
+    			add_location(div6, file, 291, 3, 6751);
     			attr_dev(div7, "class", "flex column basis10pc br1-solid grow overflow-hidden h100vh");
-    			add_location(div7, file, 279, 2, 6276);
+    			add_location(div7, file, 281, 2, 6392);
     			attr_dev(span4, "class", "bb2-solid block");
-    			add_location(span4, file, 325, 5, 7850);
+    			add_location(span4, file, 327, 5, 7966);
     			attr_dev(h42, "class", "flex bold");
-    			add_location(h42, file, 324, 4, 7822);
+    			add_location(h42, file, 326, 4, 7938);
     			attr_dev(div8, "class", "p1");
-    			add_location(div8, file, 323, 3, 7801);
+    			add_location(div8, file, 325, 3, 7917);
     			attr_dev(span5, "class", "bb2-solid block");
-    			add_location(span5, file, 375, 6, 9221);
+    			add_location(span5, file, 377, 6, 9337);
     			attr_dev(h43, "class", "flex bold");
-    			add_location(h43, file, 374, 5, 9192);
+    			add_location(h43, file, 376, 5, 9308);
     			attr_dev(div9, "class", "flex column cmb1 p1 bt1-solid");
-    			add_location(div9, file, 373, 4, 9143);
+    			add_location(div9, file, 375, 4, 9259);
     			attr_dev(div10, "class", "flex column no-basis br1-solid grow overflow-auto");
-    			add_location(div10, file, 321, 2, 7733);
+    			add_location(div10, file, 323, 2, 7849);
     			attr_dev(span6, "class", "bb2-solid block");
-    			add_location(span6, file, 411, 6, 10091);
+    			add_location(span6, file, 413, 6, 10207);
     			attr_dev(h44, "class", "flex bold");
-    			add_location(h44, file, 410, 5, 10062);
-    			add_location(button2, file, 413, 5, 10153);
+    			add_location(h44, file, 412, 5, 10178);
+    			add_location(button2, file, 415, 5, 10269);
     			attr_dev(div11, "class", "p1 flex row-space-between-center");
-    			add_location(div11, file, 409, 4, 10010);
+    			add_location(div11, file, 411, 4, 10126);
     			attr_dev(div12, "class", "overflow-auto h100pc");
     			toggle_class(div12, "hidden", !/*inited*/ ctx[3]);
-    			add_location(div12, file, 415, 4, 10208);
+    			add_location(div12, file, 417, 4, 10324);
     			attr_dev(div13, "class", "overflow-hidden minh50vh maxh50vh h50vh flex column");
-    			add_location(div13, file, 408, 3, 9940);
+    			add_location(div13, file, 410, 3, 10056);
     			attr_dev(span7, "class", "bb2-solid block");
-    			add_location(span7, file, 427, 6, 10587);
-    			add_location(h45, file, 426, 5, 10576);
-    			add_location(button3, file, 429, 5, 10645);
+    			add_location(span7, file, 429, 6, 10703);
+    			add_location(h45, file, 428, 5, 10692);
+    			add_location(button3, file, 431, 5, 10761);
     			attr_dev(div14, "class", "flex row-space-between-center");
-    			add_location(div14, file, 425, 4, 10527);
+    			add_location(div14, file, 427, 4, 10643);
     			attr_dev(pre, "class", "mtb1 monospace w100pc");
     			set_style(pre, "word-wrap", "break-word");
     			set_style(pre, "white-space", "pre-wrap");
-    			add_location(pre, file, 432, 5, 10769);
+    			add_location(pre, file, 434, 5, 10885);
     			attr_dev(div15, "class", "overflow-auto h100pc w100pc");
     			toggle_class(div15, "hidden", !/*inited*/ ctx[3]);
-    			add_location(div15, file, 431, 4, 10698);
+    			add_location(div15, file, 433, 4, 10814);
     			attr_dev(div16, "class", "flex column p1 bt1-solid overflow-hidden");
-    			add_location(div16, file, 424, 3, 10468);
+    			add_location(div16, file, 426, 3, 10584);
     			attr_dev(div17, "class", "flex flex-column grow no-basis");
-    			add_location(div17, file, 404, 2, 9889);
+    			add_location(div17, file, 406, 2, 10005);
     			attr_dev(div18, "class", "flex grow h100pc");
-    			add_location(div18, file, 278, 1, 6243);
+    			add_location(div18, file, 280, 1, 6359);
     			attr_dev(main, "class", "flex column-stretch-stretch h100vh overflow-hidden");
-    			add_location(main, file, 277, 0, 6176);
+    			add_location(main, file, 279, 0, 6292);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -7452,7 +7449,9 @@ var app = (function () {
     	async function getPermissions() {
     		for (let i = 0; i < endpoints.length; i++) {
     			let e = endpoints[i];
-    			const res = await fetcheriser[e.type.toLowerCase()](e.url, { ezapi_permissions: true });
+    			const type = (e?.type || "unknown").toLowerCase();
+    			console.log(`[Overview] getting permissions for ${type} ${e.url}`, out);
+    			const res = await out[type](e.url, { ezapi_permissions: true });
     			$$invalidate(27, endpoints[i].permissions = res.ok || false, endpoints);
     		}
     	}
@@ -7492,7 +7491,7 @@ var app = (function () {
     	}
 
     	async function whoami() {
-    		$$invalidate(5, who = (await fetcheriser.get("/api/whoami")).data);
+    		$$invalidate(5, who = (await out.get("/api/whoami")).data);
     	}
 
     	let timestamp;
@@ -7520,7 +7519,7 @@ var app = (function () {
     		timestamp = new Date();
     		$$invalidate(29, data = "");
     		$$invalidate(4, waiting = true);
-    		const res = await fetcheriser[endpoint.type](regexed, copy, false);
+    		const res = await out[endpoint.type](regexed, copy, false);
     		status = res.status || res.code;
     		timer = (new Date() - timestamp) / 1000;
 
@@ -7558,7 +7557,7 @@ var app = (function () {
     		$$invalidate(7, loginError = "");
     		e.preventDefault();
     		e.stopPropagation();
-    		const res = await fetcheriser.post("/api/login", creds);
+    		const res = await out.post("/api/login", creds);
 
     		if (res.ok) {
     			await whoami();
@@ -7571,7 +7570,7 @@ var app = (function () {
     	async function logout(e) {
     		e.preventDefault();
     		e.stopPropagation();
-    		const res = await fetcheriser.post("/api/logout");
+    		const res = await out.post("/api/logout");
 
     		if (res.ok) {
     			await whoami();
@@ -7685,7 +7684,7 @@ var app = (function () {
 
     	$$self.$capture_state = () => ({
     		onMount,
-    		fetcher: fetcheriser,
+    		fetcher: out,
     		Table,
     		parse,
     		svg,
