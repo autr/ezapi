@@ -55,5 +55,6 @@ return eazapi.app( [
 
 ], { 
 	port: 3001,
-	nocache: true
+	nocache: true,
+	cors: e => ['http://localhost:3000','http://localhost:5000','http://localhost:8888']
 } )

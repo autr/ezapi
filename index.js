@@ -36,10 +36,10 @@ function getRegex( url, endpoints ) {
 // perform res and req
 
 const colors = {
-	green: '\x1b[92m',
-	blue: '\x1b[96m',
-	pink: '\x1b[95m',
-	yellow: '\x1b[103m',
+	green: '\x1b[30m\x1b[92m',
+	blue: '\x1b[30m\x1b[96m',
+	pink: '\x1b[30m\x1b[95m',
+	yellow: '\x1b[30m\x1b[103m',
 	end: '\033[0m'
 }
 
@@ -168,8 +168,14 @@ module.exports = {
 
 		const CORS = await opts.cors()
 
-		log.yellow(`[ezapi] 👨‍✈️  using cors policy: `)
-		console.log('--->', CORS)
+		console.log(`[ezapi] 👨‍✈️  using cors policy: `, CORS)
+
+		if (!CORS) {
+			console.log(`[ezapi] 👨‍✈️  setting cors to *`)
+			app.use( cors() )
+			app.options('*', cors() )
+		}
+
 
 
 		endpoints.forEach( item => {
@@ -251,7 +257,14 @@ module.exports = {
 
 						if ( meth == 'get' ) {
 							for (const [k, v] of Object.entries(args)) {
-								args[k] = JSON.parse( v.toLowerCase() )
+								const lower = v.toLowerCase()
+								args[k] = isNaN(v) ? ( v == 'true' || v == 'false' ) ? JSON.parse( lower ) : v : Number(v)
+								if (typeof( args[k] ) == 'string') {
+									try {
+										args[k] = JSON.parse( v )
+									} catch(err) {}
+								}
+								console.log(k, v, typeof(args[k]))
 							}
 						}
 

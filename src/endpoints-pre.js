@@ -11,7 +11,8 @@ const overviewPath = path.join(__dirname, '../assets')
 console.log(`[ezapi] 📺  serving endpoints to: ${overviewPath}`)
 
 module.exports = async (opts, endpoints) => {
-	const CORS = await opts.cors()
+	const CORS = { origin: await opts.cors(), credentials: true }
+	console.log(`setting cors:`, CORS)
 	return [
 		{
 			type: 'use',
