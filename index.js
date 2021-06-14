@@ -33,8 +33,6 @@ function getRegex( url, endpoints ) {
 	return regex
 }
 
-// perform res and req
-
 const colors = {
 	green: '\x1b[30m\x1b[92m',
 	blue: '\x1b[30m\x1b[96m',
@@ -168,10 +166,10 @@ module.exports = {
 
 		const CORS = await opts.cors()
 
-		console.log(`[ezapi] 👨‍✈️  using cors policy: `, CORS)
+		log.blue(`[ezapi] 👨‍✈️  CORS: ${CORS.join(', ')}`)
 
 		if (!CORS) {
-			console.log(`[ezapi] 👨‍✈️  setting cors to *`)
+			CORS.join(', ')(`[ezapi] 👨‍✈️  CORS: *`)
 			app.use( cors() )
 			app.options('*', cors() )
 		}
@@ -180,9 +178,6 @@ module.exports = {
 
 		endpoints.forEach( item => {
 
-			const EMOJI = item.type == 'use' ? '🔧' : item.type == 'get' ? '🍬' : '✉️'
-
-			if (!opts.silent) log.blue(`[ezapi] ${EMOJI}  ${item.type.toUpperCase()}: ${item.url || '~'} ${ item.type == 'use' ? item.description : ''}`)
 			if (item.type == 'use') {
 				if (item.url)
 					app[ item.type ]( item.url, item.next )
@@ -193,15 +188,15 @@ module.exports = {
 
 				app[ item.type ]( path.join( opts.apiRoot, item.url ), async (req, res) => {
 
-					const METHOD = icon[req.method.toUpperCase()]
-					let args = ( item.type.toLowerCase() == 'get' ) ? req.query : req.body
-					const CHECK_PERMISSIONS = args?.ezapi_permissions
+					const METHOD = req.method.toUpperCase()
+					let ARGS = ( item.type.toLowerCase() == 'get' ) ? req.query : req.body
+					const CHECK_PERMISSIONS = ARGS?.ezapi_permissions
+					const UNIQ = `${(new Date()).toISOString().substr(11, 10).replace(/[^\w\-]+/g, ':').replace('T','.')}`
 
 					try {
 
 						let ipV4 = req.connection.remoteAddress.replace(/^.*:/, '')
 						if (ipV4 === '1') ipV4 = 'localhost'
-						if (!opts.silent) console.log(`[ezapi] 🐟  ---> request from "${ipV4}"...`) 
 
 						// const info = (new ua()).setUA( req.headers['user-agent'] ).getResult()
 
@@ -212,7 +207,8 @@ module.exports = {
 						let regex = null
 						let user = req.isAuthenticated() ? req.user : { username: 'guest' }
 
-						if (!opts.silent) log.blue(`[ezapi] 👤  ${METHOD} ${req.path} <--- ${user?.username || user}`)
+						if (!opts.silent) log.blue(`[ezapi] ${UNIQ} 🐟  ${METHOD} request from ${ipV4} / ${user?.username || user}`) 
+						if (!opts.silent) log.blue(`[ezapi] ${UNIQ} 🐟  ${METHOD} ${req.path} `)
 
 						const meth = req.method.toLowerCase()
 
@@ -238,7 +234,8 @@ module.exports = {
 						// ----------------------------------------
 
 						if (!regex) {
-							log.pink(`[ezapi] 🛑  ${401} ${req.isAuthenticated()} "${user.username}" ${cpath} not authorised with permissions for "${JSON.stringify(permissions)}"` )
+							log.pink(`[ezapi] ${UNIQ} 🛑  ${401} ${METHOD} ${user.username} not authorised`) 
+							log.pink(`[ezapi] ${UNIQ} 🛑  ${401} ${METHOD} (permissions) ${cpath} `)
 							return sendError( res, 401, 'not authorised')
 						}
 
@@ -256,27 +253,28 @@ module.exports = {
 						// convert (get) url params into actual json (ie. boolean, integer etc)
 
 						if ( meth == 'get' ) {
-							for (const [k, v] of Object.entries(args)) {
+							for (const [k, v] of Object.entries(ARGS)) {
 								const lower = v.toLowerCase()
-								args[k] = isNaN(v) ? ( v == 'true' || v == 'false' ) ? JSON.parse( lower ) : v : Number(v)
-								if (typeof( args[k] ) == 'string') {
+								ARGS[k] = isNaN(v) ? ( v == 'true' || v == 'false' ) ? JSON.parse( lower ) : v : Number(v)
+								if (typeof( ARGS[k] ) == 'string') {
 									try {
-										args[k] = JSON.parse( v )
+										ARGS[k] = JSON.parse( v )
 									} catch(err) {}
 								}
-								console.log(k, v, typeof(args[k]))
 							}
 						}
 
-						const result = validate( args, schema, {required: true} )
+						const result = validate( ARGS, schema, {required: true} )
 
 						if (!result.valid) {
 							const errs = result.errors.map( err => { 
 								return err.path[err.path.length-1] + ' ' + err.message
 							}).join('\n')
 
-							log.pink(`[ezapi] 🛑  ${422} ${METHOD} ${req.path} invalid schema "${errs}" -> ${item.type} ${item.url}` )
-							const extra = { args, schema, result } 
+							log.pink(`[ezapi] ${UNIQ} 🛑  ${422} ${METHOD} invalid schema ${errs}`) 
+							log.pink(`[ezapi] ${UNIQ} 🛑  ${422} ${METHOD} (schema) ${item.type} ${item.url}`)
+
+							const extra = { ARGS, schema, result } 
 							return sendError( res, 422, errs, extra)
 						}
 
@@ -286,7 +284,7 @@ module.exports = {
 
 						let data = {}
 						if (item.data) data = await item.data({
-							...args, 
+							...ARGS, 
 							regex 
 						}, { 
 							user, 
@@ -296,7 +294,7 @@ module.exports = {
 
 						// ----------------------------------------------
 
-						if (!opts.silent) log.green(`[ezapi] ✅  ${METHOD} ${req.path} ---> success`)
+						if (!opts.silent) log.green(`[ezapi] ${UNIQ} ✅  ${METHOD} ${req.path}`)
 
 						const send = item.next || ( (req, res, data) => res.send( data ) )
 						return send( req, res, data )
@@ -305,7 +303,8 @@ module.exports = {
 
 						let code = 500
 						if (err.code == 'ENOENT') code = 404
-						log.pink(`[ezapi] 🛑  ${code} ${METHOD} ${req.path} ${err.message || err, err.stack || err}` )
+						log.pink(`[ezapi] ${UNIQ} 🛑  ${code} ${METHOD} ${err.message || err, err.stack || err}`) 
+						log.pink(`[ezapi] ${UNIQ} 🛑  ${code} ${METHOD} (catch) ${req.path}`)
 						return sendError( res, 500, err.message || err )
 						
 					}
