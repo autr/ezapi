@@ -191,8 +191,9 @@ module.exports = {
 					const METHOD = req.method.toUpperCase()
 					let ARGS = ( item.type.toLowerCase() == 'get' ) ? req.query : req.body
 					const CHECK_PERMISSIONS = ARGS?.ezapi_permissions
-					const UNIQ = `${(new Date()).toISOString().substr(11, 10).replace(/[^\w\-]+/g, ':').replace('T','.')}`
-
+					let UNIQ = (new Date()).toISOString().substring(0,22)
+					const delim = ['-',':','T','.']
+					delim.forEach( l => (UNIQ = UNIQ.replaceAll(l, '')) )
 					try {
 
 						let ipV4 = req.connection.remoteAddress.replace(/^.*:/, '')
@@ -285,7 +286,8 @@ module.exports = {
 						let data = {}
 						if (item.data) data = await item.data({
 							...ARGS, 
-							regex 
+							regex,
+							unique: UNIQ
 						}, { 
 							user, 
 							opts, 
