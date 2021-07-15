@@ -68,7 +68,7 @@ module.exports = {
 
 		let opts = {
 			port: 3000,
-			apiRoot: '/api',
+			apiRoot: '',
 			session: { 
 				secret: SECRET,
 				resave: true,

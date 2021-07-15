@@ -73,7 +73,7 @@ module.exports = async (opts, endpoints) => {
 			}
 		},
 		{
-			url: '/login',
+			url: '/api/login',
 			type: 'post',
 			description: 'login with username and password',
 			category: types.CAT_AUTH,
@@ -90,7 +90,7 @@ module.exports = async (opts, endpoints) => {
 			}
 		},
 		{
-			url: '/whoami',
+			url: '/api/whoami',
 			type: 'get',
 			description: 'view current user',
 			category: types.CAT_AUTH,
