@@ -3,7 +3,7 @@ const types = require( './types.js' )
 
 module.exports = (opts, endpoints) => [
 	{
-		url: '/api/endpoints',
+		url: '/endpoints',
 		type: 'get',
 		schema: {},
 		data: async (params, user) => {
@@ -17,7 +17,7 @@ module.exports = (opts, endpoints) => [
 		category: types.CAT_CORE
 	},
 	{
-		url: '/api/*',
+		url: '/*',
 		type: 'get',
 		next: async (req, res, next) => {
 			const similarity = require('similarity')

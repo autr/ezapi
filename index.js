@@ -58,7 +58,7 @@ Object.keys(colors).forEach( c => {
 
 module.exports = {
 	types,
-	app: async ( _endpoints, _opts, _auth ) => {
+	app: async ( _endpoints, _opts, _auth, _callback ) => {
 
 
 		if ( !Array.isArray( _endpoints ) ) throw '[ezapi] first argument "endpoints" is not an array'
@@ -313,6 +313,8 @@ module.exports = {
 				})
 			}
 		})
+
+		if (_callback) await _callback( app )
 
 
 		const server = app.listen( opts.port , async () => {
