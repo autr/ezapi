@@ -34,18 +34,18 @@ function getRegex( url, endpoints ) {
 }
 
 const colors = {
-	green: '\x1b[30m\x1b[92m',
-	blue: '\x1b[30m\x1b[96m',
-	pink: '\x1b[30m\x1b[95m',
-	yellow: '\x1b[30m\x1b[103m',
-	end: '\033[0m'
+	green: '', // '\x1b[30m\x1b[92m',
+	blue: '', // '\x1b[30m\x1b[96m',
+	pink: '', // '\x1b[30m\x1b[95m',
+	yellow: '', // '\x1b[30m\x1b[103m',
+	end: '', // '\033[0m'
 }
 
 const icon = {
-	GET: '\x1b[102mGET\033[0m',
-	POST: '\x1b[104mPOST\033[0m',
-	PUT: '\x1b[104mPUT\033[0m',
-	DELETE: '\x1b[105mDELETE\033[0m'
+	GET: '',//'\x1b[102mGET\033[0m',
+	POST: '',//'\x1b[104mPOST\033[0m',
+	PUT: '',//'\x1b[104mPUT\033[0m',
+	DELETE: '',//'\x1b[105mDELETE\033[0m'
 }
 
 const log = {}
