@@ -302,12 +302,11 @@ module.exports = {
 						return send( req, res, data )
 						
 					} catch(err) {
-
-						let code = 500
+						let code = Number.isInteger(err.code) ? err.code : 500
 						if (err.code == 'ENOENT') code = 404
 						log.pink(`[ezapi] ${UNIQ} 🛑  ${code} ${METHOD} ${err.message || err, err.stack || err}`) 
 						log.pink(`[ezapi] ${UNIQ} 🛑  ${code} ${METHOD} (catch) ${req.path}`)
-						return sendError( res, 500, err.message || err )
+						return sendError( res, code, err.message || err )
 						
 					}
 				})
